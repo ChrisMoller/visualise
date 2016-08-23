@@ -16,6 +16,10 @@ ylwrap
 src/Makefile
 src/Makefile.in
 src/vis-parse.output
+src/.deps/
+src/vis
+src/vis-lex.c
+src/vis-parse.c
 # Object files
 *.o
 *.ko
