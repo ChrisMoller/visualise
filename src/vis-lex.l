@@ -56,9 +56,11 @@ QSTR        [^\"]*
 \\[\n]             /* ignore terminal backslash */
 
 
+setlabel        { return SETLABEL; }
 setvar          { return SETVAR; }
 setctrl         { return SETCTRL; }
 setbg           { return SETBG; }
+setkey          { return SETKEY; }
 setlw           { return SETLW; }
 ylimits         { return YLIMITS; }
 lgamma          { yylval.f = FCN_LGAMMA;   return FUNCTION; }
@@ -90,6 +92,7 @@ e		{ yylval.v = M_E;          return NUMBER; }
 <QUOTED>\"      BEGIN (INITIAL);
 
 [ \t\n]+		/* ignore whitespace */
+\#.*			/* comment */
 
 .               { return ERROR; }
 

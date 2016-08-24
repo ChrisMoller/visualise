@@ -47,54 +47,58 @@ extern int yydebug;
       know about them.  */
    enum yytokentype {
      SETCTRL = 258,
-     SETVAR = 259,
-     SETBG = 260,
-     SETLW = 261,
-     YLIMITS = 262,
-     NUMBER = 263,
-     STRING = 264,
-     QSTRING = 265,
-     DYADIC_4 = 266,
-     DYADIC_3 = 267,
-     DYADIC_2 = 268,
-     MONADIC = 269,
-     FUNCTION = 270,
-     LEFT_PAREN = 271,
-     RIGHT_PAREN = 272,
-     LEFT_BRACKET = 273,
-     RIGHT_BRACKET = 274,
-     LEFT_BRACE = 275,
-     RIGHT_BRACE = 276,
-     COMMA = 277,
-     NEGATE = 278,
-     ASSIGN = 279,
-     ERROR = 280
+     SETLABEL = 259,
+     SETVAR = 260,
+     SETBG = 261,
+     SETLW = 262,
+     SETKEY = 263,
+     YLIMITS = 264,
+     NUMBER = 265,
+     STRING = 266,
+     QSTRING = 267,
+     DYADIC_4 = 268,
+     DYADIC_3 = 269,
+     DYADIC_2 = 270,
+     MONADIC = 271,
+     FUNCTION = 272,
+     LEFT_PAREN = 273,
+     RIGHT_PAREN = 274,
+     LEFT_BRACKET = 275,
+     RIGHT_BRACKET = 276,
+     LEFT_BRACE = 277,
+     RIGHT_BRACE = 278,
+     COMMA = 279,
+     NEGATE = 280,
+     ASSIGN = 281,
+     ERROR = 282
    };
 #endif
 /* Tokens.  */
 #define SETCTRL 258
-#define SETVAR 259
-#define SETBG 260
-#define SETLW 261
-#define YLIMITS 262
-#define NUMBER 263
-#define STRING 264
-#define QSTRING 265
-#define DYADIC_4 266
-#define DYADIC_3 267
-#define DYADIC_2 268
-#define MONADIC 269
-#define FUNCTION 270
-#define LEFT_PAREN 271
-#define RIGHT_PAREN 272
-#define LEFT_BRACKET 273
-#define RIGHT_BRACKET 274
-#define LEFT_BRACE 275
-#define RIGHT_BRACE 276
-#define COMMA 277
-#define NEGATE 278
-#define ASSIGN 279
-#define ERROR 280
+#define SETLABEL 259
+#define SETVAR 260
+#define SETBG 261
+#define SETLW 262
+#define SETKEY 263
+#define YLIMITS 264
+#define NUMBER 265
+#define STRING 266
+#define QSTRING 267
+#define DYADIC_4 268
+#define DYADIC_3 269
+#define DYADIC_2 270
+#define MONADIC 271
+#define FUNCTION 272
+#define LEFT_PAREN 273
+#define RIGHT_PAREN 274
+#define LEFT_BRACKET 275
+#define RIGHT_BRACKET 276
+#define LEFT_BRACE 277
+#define RIGHT_BRACE 278
+#define COMMA 279
+#define NEGATE 280
+#define ASSIGN 281
+#define ERROR 282
 
 
 
@@ -113,7 +117,7 @@ typedef union YYSTYPE
 
 
 /* Line 2058 of yacc.c  */
-#line 117 "vis-parse.h"
+#line 121 "vis-parse.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

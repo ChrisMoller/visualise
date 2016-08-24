@@ -2,6 +2,7 @@
 #include <gtk/gtk.h>
 #include <malloc.h>
 #include <stdlib.h>
+#include <strings.h>
 
 #include "vis.h"
 
@@ -10,6 +11,9 @@ extern GList *svbls;
 extern vbl_s *ivar;
 extern limits_s limits;
 extern GdkRGBA *bg_colour;
+extern double key_x;
+extern double key_y;
+extern label_s *labels;
 
 typedef void (*parse_fcn)(curve_s *curve, char *str);
 
@@ -179,6 +183,63 @@ set_bg (char *colour)
   if (colour) gdk_rgba_parse (&rgba, colour);
   if (bg_colour) gdk_rgba_free (bg_colour);
   bg_colour = gdk_rgba_copy (&rgba);
+}
+
+void
+set_key_alpha (char *loc)
+{
+  if (!loc) return;
+  if (!strcasecmp (loc, "off")) key_x = key_y = KEY_LOC_OFF;
+  else {
+    char *p = loc;
+    for (; *p; p++) {
+      switch (*p) {
+      case 't':
+      case 'T':
+	key_y = KEY_LOC_TOP;
+	break;
+      case 'm':
+      case 'M':
+	key_y = KEY_LOC_MIDDLE;
+	break;
+      case 'b':
+      case 'B':
+	key_y = KEY_LOC_BOTTOM;
+	break;
+      case 'l':
+      case 'L':
+	key_x = KEY_LOC_LEFT;
+	break;
+      case 'c':
+      case 'C':
+	key_x = KEY_LOC_CENTRE;
+	break;
+      case 'r':
+      case 'R':
+	key_x = KEY_LOC_RIGHT;
+	break;
+      }
+    }
+  }
+}
+
+void
+set_key_numeric (node_u xloc, node_u yloc)
+{
+  key_x = evaluate_phrase (xloc);
+  key_y = evaluate_phrase (yloc);
+}
+
+void
+create_label (node_u x, node_u y, char *str)
+{
+  label_s *label = malloc (sizeof(label_s));
+  label_x (label) = evaluate_phrase (x) / 100.0;
+  label_y (label) = evaluate_phrase (y) / 100.0;
+  label_string (label) = str;
+  label_next (label) = NULL;
+  if (labels) label_next (labels) = label;
+  else labels = label;
 }
 
 param_s *

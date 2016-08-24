@@ -6,6 +6,7 @@
 /* forward refs */
 typedef void *node_u;
 typedef struct _param_s param_s;
+typedef struct _label_s label_s;
 
 typedef double (*fcn_t)(double x);
 
@@ -135,6 +136,25 @@ typedef struct {
 #define vbl_max(v)   (v)->max
 #define vbl_type(v)  (v)->type
 #define vbl_adj(v)   (v)->adj
+
+struct _label_s {
+  double   x;
+  double   y;
+  char    *string;
+  label_s *next;
+};
+#define label_x(l)	((l)->x)
+#define label_y(l)	((l)->y)
+#define label_string(l)	((l)->string)
+#define label_next(l)	((l)->next)
+
+#define KEY_LOC_OFF	-1.0
+#define KEY_LOC_TOP	 5.0
+#define KEY_LOC_MIDDLE	35.0
+#define KEY_LOC_BOTTOM	75.0
+#define KEY_LOC_LEFT	 5.0
+#define KEY_LOC_CENTRE	35.0
+#define KEY_LOC_RIGHT	75.0
 
 double   evaluate_phrase (node_u node);
 void     show_node (int indent, node_u node);

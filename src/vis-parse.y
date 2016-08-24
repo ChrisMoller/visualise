@@ -25,9 +25,11 @@
 };
 
 %token	    SETCTRL
+%token	    SETLABEL
 %token	    SETVAR
 %token	    SETBG
 %token	    SETLW
+%token	    SETKEY
 %token	    YLIMITS
 %token	<v> NUMBER
 %token  <s> STRING
@@ -48,6 +50,7 @@
 %left       ASSIGN
 %type	<n> phrase
 %type	<s> optname
+%type	<s> anystring
 %type	<p> options
 %type	<p> param
 %token      ERROR
@@ -60,28 +63,41 @@
 %%
 
 stmt	:	/* null */
-	| stmt SETBG QSTRING { set_bg ($3); }
+	| stmt SETLABEL LEFT_BRACKET phrase COMMA phrase RIGHT_BRACKET QSTRING
+	        { create_label ($4, $6, $8); }
+	| stmt SETKEY keyarg
+	| stmt SETBG anystring { set_bg ($3); }
 	| stmt optname options phrase
                 { if (curve) *curve = create_curve ($2, $3, $4); }
-  | stmt SETCTRL QSTRING phrase LEFT_BRACKET phrase COMMA phrase RIGHT_BRACKET
+  | stmt SETCTRL STRING phrase LEFT_BRACKET phrase COMMA phrase RIGHT_BRACKET
 	        { create_vbl ($3, $4, $6, $8); }
-	| stmt SETVAR QSTRING LEFT_BRACKET phrase COMMA phrase RIGHT_BRACKET
+	| stmt SETVAR STRING LEFT_BRACKET phrase COMMA phrase RIGHT_BRACKET
 	        { create_vbl ($3, NULL, $5, $7); }
 	| stmt YLIMITS LEFT_BRACKET phrase COMMA phrase RIGHT_BRACKET
 	        { create_limits ($4, $6); }
 	;
+
+keyarg  : anystring { set_key_alpha ($1); }
+	| LEFT_BRACKET phrase COMMA phrase RIGHT_BRACKET
+	         {set_key_numeric ($2, $4); }
+        ;
+             
 
 optname : { $$ = NULL; }
 	| QSTRING { $$ = $1; }
         ;
 
 options : { $$ = NULL; }
-	  | LEFT_BRACE param RIGHT_BRACE { $$ = $2; }
-          ;
+	| LEFT_BRACE param RIGHT_BRACE { $$ = $2; }
+        ;
 
 param   : { $$ = NULL; }
-	| param STRING ASSIGN QSTRING { $$ = cat_param ($1, $2, $4); }
+	| param STRING ASSIGN anystring { $$ = cat_param ($1, $2, $4); }
         ;
+
+anystring : STRING { $$ = $1; }
+	  | QSTRING { $$ = $1; }
+          ;
 
 phrase  : NUMBER           { $$ = create_value_node ($1); }
 	| STRING           { $$ = create_string_node ($1); }

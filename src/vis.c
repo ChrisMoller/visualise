@@ -26,6 +26,9 @@ GList *svbls		= NULL;
 vbl_s *ivar		= NULL;
 limits_s limits		= {-MAXDOUBLE, MAXDOUBLE};
 GdkRGBA *bg_colour	= NULL;
+double key_x		= KEY_LOC_LEFT;
+double key_y		= KEY_LOC_TOP;
+label_s *labels		= NULL;
 
 #define DEFAULT_WIDTH  480
 #define DEFAULT_HEIGHT 320
@@ -72,6 +75,7 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
   double max_y = -MAXDOUBLE;
   double scale_x;
   double scale_y;
+  double key_offset = 0;
   
 #define xformx(xx) (((xx) - vbl_min (ivar)) * scale_x)
 #define xformy(yy) (height - ((yy) - min_y) * scale_y)
@@ -115,21 +119,32 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
 	}
 	cairo_stroke (cr);
       }
+
+      if (key_x >= 0.0 && key_y >= 0.0) {
+	cairo_move_to (cr, key_x * width / 100.0,
+		       key_offset + key_y * height / 100.0);
+	cairo_line_to (cr, 30.0 + key_x * width / 100.0,
+		       key_offset + key_y * height / 100.0);
+	cairo_move_to (cr, 40.0 + key_x * width / 100.0,
+		       (key_offset -18.0) + key_y * height / 100.0);
+	if (curve_name (curve)) cairo_show_text (cr, curve_name (curve));
+	key_offset += 20.0;
+      }
     }
   }
-#if 0
-  cairo_set_source_rgba (cr, 0.0, 0.0, 0.0, 1.0);
-  cairo_move_to (cr, 100.0, 100.0);
-  cairo_show_text (cr, "kkkkk");
-  cairo_stroke (cr);
-#endif
 
   if (ivar && curves) {
+
+    /********** compute scale **********/
+    
     g_list_foreach (curves, scale_curve, NULL);
 
     scale_x = width  / (vbl_max (ivar) - vbl_min (ivar));
     scale_y = height / (max_y - min_y);
 
+
+    /****** axes ******/
+    
     double floorx, ceilx;
     axis_limits (vbl_min (ivar), vbl_max (ivar), &floorx, &ceilx);
     double floory, ceily;
@@ -209,8 +224,21 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
       }
     }
 
-
     cairo_stroke (cr);
+
+
+    /********* labels *********/
+    
+    if (labels) {
+      for (label_s *lbl = labels; lbl; lbl = label_next (lbl)) {
+	cairo_move_to (cr, label_x (lbl) * width, label_y (lbl) * height);
+	cairo_show_text (cr, label_string (lbl));
+      }
+      cairo_stroke (cr);
+    }
+
+
+    /********* draw curves *********/
 
     g_list_foreach (curves, draw_curve, NULL);
   }
