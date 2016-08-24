@@ -28,7 +28,6 @@
 %token	    SETLABEL
 %token	    SETVAR
 %token	    SETBG
-%token	    SETLW
 %token	    SETKEY
 %token	    YLIMITS
 %token	<v> NUMBER
@@ -54,6 +53,7 @@
 %type	<p> options
 %type	<p> param
 %token      ERROR
+%right      UMINUS
 
 %parse-param {curve_s **curve}
 %debug
@@ -63,8 +63,9 @@
 %%
 
 stmt	:	/* null */
-	| stmt SETLABEL LEFT_BRACKET phrase COMMA phrase RIGHT_BRACKET QSTRING
-	        { create_label ($4, $6, $8); }
+	| stmt SETLABEL options
+              LEFT_BRACKET phrase COMMA phrase RIGHT_BRACKET QSTRING
+                 { create_label ($3, $5, $7, $9); }
 	| stmt SETKEY keyarg
 	| stmt SETBG anystring { set_bg ($3); }
 	| stmt optname options phrase
@@ -105,9 +106,10 @@ phrase  : NUMBER           { $$ = create_value_node ($1); }
 	| phrase DYADIC_2 phrase { $$ = create_dyadic_node ($1, $2, $3); }
 	| phrase DYADIC_3 phrase { $$ = create_dyadic_node ($1, $2, $3); }
 	| phrase DYADIC_4 phrase { $$ = create_dyadic_node ($1, $2, $3); }
-	| phrase NEGATE phrase %prec DYADIC_4
+	| phrase NEGATE phrase
 		{ $$ = create_dyadic_node ($1, SYM_MINUS, $3); }
-	| NEGATE phrase    { $$ = create_monadic_node (SYM_MINUS, $2); }
+	| NEGATE phrase %prec UMINUS
+                { $$ = create_monadic_node (SYM_MINUS, $2); }
 	| FUNCTION LEFT_PAREN phrase RIGHT_PAREN
 		{ $$ = create_function_node ($1, $3); }
 	| LEFT_PAREN phrase RIGHT_PAREN  { $$ = $2; }

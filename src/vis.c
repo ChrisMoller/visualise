@@ -1,5 +1,10 @@
+#ifdef HAVE_CONFIG_H
+#include "../config.h"
+#endif
+
 #define _GNU_SOURCE
 #include <gtk/gtk.h>
+#include <glib/gi18n-lib.h>
 #include <cairo/cairo-pdf.h>
 #include <cairo/cairo-ps.h>
 #include <cairo/cairo-svg.h>
@@ -43,6 +48,48 @@ static cairo_surface_t *surface	= NULL;
 static GtkAdjustment *vadj	= NULL;
 
 static void
+draw_label (cairo_t *cr, double width, double height, label_s *label)
+{
+  if (!label) return;
+
+
+  PangoLayout *layout = pango_cairo_create_layout (cr);
+  pango_layout_set_text (layout, label_string (label), -1);
+  PangoFontDescription *desc = label_font (label);
+  gboolean free_desc = FALSE;
+  if (!desc) {
+    desc = pango_font_description_from_string ("Sans 12");
+    free_desc = TRUE;
+  }
+  pango_layout_set_font_description (layout, desc);
+  if (free_desc) pango_font_description_free (desc);
+
+  cairo_save (cr);
+  
+  cairo_set_source_rgba (cr,
+			 label_rgba (label)->red,
+			 label_rgba (label)->green,
+			 label_rgba (label)->blue,
+			 label_rgba (label)->alpha);
+
+  /* rotate here */
+  
+  cairo_move_to (cr, label_x (label) * width, label_y (label) * height);
+
+  cairo_rotate (cr, -label_angle (label));
+
+  pango_cairo_update_layout (cr, layout);
+
+  // pango_layout_get_size (layout, &width, &height);
+
+  pango_cairo_show_layout (cr, layout);
+
+  cairo_stroke (cr);
+  
+  cairo_restore (cr);
+}
+
+static void
 axis_limits (double min, double max, double *floor_p, double *ceil_p)
 {
   double intfl;
@@ -79,6 +126,8 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
   
 #define xformx(xx) (((xx) - vbl_min (ivar)) * scale_x)
 #define xformy(yy) (height - ((yy) - min_y) * scale_y)
+  
+#define KEY_OFFSET_INCR 15.0
 
   void scale_curve (gpointer data, gpointer user_data)
   {
@@ -121,14 +170,13 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
       }
 
       if (key_x >= 0.0 && key_y >= 0.0) {
-	cairo_move_to (cr, key_x * width / 100.0,
-		       key_offset + key_y * height / 100.0);
-	cairo_line_to (cr, 30.0 + key_x * width / 100.0,
-		       key_offset + key_y * height / 100.0);
+	cairo_move_to (cr, key_x * width / 100.0, key_offset);
+	cairo_line_to (cr, 30.0 + key_x * width / 100.0, key_offset);
 	cairo_move_to (cr, 40.0 + key_x * width / 100.0,
-		       (key_offset -18.0) + key_y * height / 100.0);
+		       key_offset - 15.0);
 	if (curve_name (curve)) cairo_show_text (cr, curve_name (curve));
-	key_offset += 20.0;
+	key_offset += KEY_OFFSET_INCR;
+	cairo_stroke (cr);
       }
     }
   }
@@ -230,13 +278,14 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
     /********* labels *********/
     
     if (labels) {
-      for (label_s *lbl = labels; lbl; lbl = label_next (lbl)) {
-	cairo_move_to (cr, label_x (lbl) * width, label_y (lbl) * height);
-	cairo_show_text (cr, label_string (lbl));
-      }
-      cairo_stroke (cr);
+      for (label_s *lbl = labels; lbl; lbl = label_next (lbl))
+	draw_label (cr, width, height, lbl);
     }
 
+    /*********** key setup *********/
+
+    double blk_ht = (double)g_list_length (curves) * KEY_OFFSET_INCR;
+    key_offset = key_y * (height - blk_ht) / 100.0;
 
     /********* draw curves *********/
 
@@ -249,14 +298,16 @@ save_dialogue (GtkWidget *widget, gpointer data)
 {
   gint response;
   GtkFileFilter *filter = gtk_file_filter_new ();
-  gtk_file_filter_set_name (GTK_FILE_FILTER (filter), "Images");
+  gtk_file_filter_set_name (GTK_FILE_FILTER (filter), _ ("Images"));
   gtk_file_filter_add_pattern (filter, "*.ps");
   gtk_file_filter_add_pattern (filter, "*.pdf");
   gtk_file_filter_add_pattern (filter, "*.svg");
   gtk_file_filter_add_pattern (filter, "*.png");
   gtk_file_filter_add_pattern (filter, "*.jpg");
+  gtk_file_filter_add_pattern (filter, "*.tif");
+
   GtkWidget *dialog =
-    gtk_file_chooser_dialog_new ("Save image",
+    gtk_file_chooser_dialog_new (_ ("Save image"),
 				 GTK_WINDOW (window),
 				 GTK_FILE_CHOOSER_ACTION_SAVE,
 				 "_OK", GTK_RESPONSE_ACCEPT,
@@ -272,24 +323,24 @@ save_dialogue (GtkWidget *widget, gpointer data)
   GtkWidget *label = gtk_label_new ("Width");
   gtk_box_pack_start (GTK_BOX (hbox), GTK_WIDGET (label), FALSE, FALSE, 2);
   
-  GtkAdjustment *wadj = gtk_adjustment_new ((gdouble)width,  // value
-					    1.0,      // lower
-					    10000.0,       // upper
-					    0.1,       // step
-					    0.5,       // page
-					    0.5);      // page size
+  GtkAdjustment *wadj = gtk_adjustment_new ((gdouble)width,	// value
+					    1.0,      		// lower
+					    10000.0,       	// upper
+					    0.1,       		// step
+					    0.5,       		// page
+					    0.5);      		// page size
   GtkWidget *wbutton = gtk_spin_button_new (wadj, 1.0, 3);
   gtk_box_pack_start (GTK_BOX (hbox), GTK_WIDGET (wbutton), FALSE, FALSE, 2);
   
   label = gtk_label_new ("Height");
   gtk_box_pack_start (GTK_BOX (hbox), GTK_WIDGET (label), FALSE, FALSE, 2);
   
-  GtkAdjustment *hadj = gtk_adjustment_new ((gdouble)height,       // value
-					    1.0,      // lower
-					    10000.0,       // upper
-					    0.1,       // step
-					    0.5,       // page
-					    0.5);      // page size
+  GtkAdjustment *hadj = gtk_adjustment_new ((gdouble)height,	// value
+					    1.0,     		// lower
+					    10000.0,       	// upper
+					    0.1,       		// step
+					    0.5,       		// page
+					    0.5);      		// page size
   GtkWidget *hbutton = gtk_spin_button_new (hadj, 1.0, 3);
   gtk_box_pack_start (GTK_BOX (hbox), GTK_WIDGET (hbutton), FALSE, FALSE, 2);
   
@@ -313,7 +364,9 @@ save_dialogue (GtkWidget *widget, gpointer data)
     else if (g_str_has_suffix (file, ".svg"))
       tsurface = cairo_svg_surface_create (file, wwi, hhi);
     else if (g_str_has_suffix (file, ".png") ||
-	     g_str_has_suffix (file, ".jpg")) {
+	     g_str_has_suffix (file, ".jpg") ||
+	     g_str_has_suffix (file, ".tif")
+	     ) {
       tsurface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, wwi, hhi);
       do_magick = TRUE;
     }
@@ -337,7 +390,7 @@ save_dialogue (GtkWidget *widget, gpointer data)
 				GTK_DIALOG_DESTROY_WITH_PARENT,
 				GTK_MESSAGE_ERROR,
 				GTK_BUTTONS_OK,
-				"Unknown file type: %s", file);
+				_ ("Unknown file type: %s"), file);
       gtk_window_set_keep_above (GTK_WINDOW (mdlg), TRUE);
       gtk_window_set_position (GTK_WINDOW (mdlg), GTK_WIN_POS_MOUSE);
       gtk_dialog_run (GTK_DIALOG (mdlg));
@@ -393,10 +446,10 @@ preferences (GtkWidget *object, gpointer data)
   GtkWidget     *button;
   GtkWidget     *thing;
 
-  dialog =  gtk_dialog_new_with_buttons ("Preferences",
+  dialog =  gtk_dialog_new_with_buttons (_ ("Preferences"),
                                          GTK_WINDOW (window),
 					 GTK_DIALOG_DESTROY_WITH_PARENT,
-                                         "_Cancel", GTK_RESPONSE_CANCEL,
+                                         _ ("_Cancel"), GTK_RESPONSE_CANCEL,
                                          NULL);
   g_signal_connect (dialog, "response",
 		    G_CALLBACK (granularity_cb_response), NULL);
@@ -415,12 +468,12 @@ preferences (GtkWidget *object, gpointer data)
   label = gtk_label_new ("Granularity");
   gtk_box_pack_start (GTK_BOX (hbox), GTK_WIDGET (label), FALSE, FALSE, 2);
 
-  GtkAdjustment *gadj = gtk_adjustment_new (granularity,       // value
-					    1.0,      // lower
-					    10000.0,       // upper
-					    0.1,       // step
-					    0.5,       // page
-					    0.5);      // page size
+  GtkAdjustment *gadj = gtk_adjustment_new (granularity,	// value
+					    1.0,      		// lower
+					    10000.0,       	// upper
+					    0.1,       		// step
+					    0.5,       		// page
+					    0.5);      		// page size
   button = gtk_spin_button_new (gadj, 1.0, 3);
   g_signal_connect (button, "value-changed",
 		    G_CALLBACK (granularity_cb), NULL);
@@ -679,11 +732,11 @@ build_menu (GtkWidget *vbox)
   /********* file menu ********/
 
   menu = gtk_menu_new();
-  item = gtk_menu_item_new_with_label ("File");
+  item = gtk_menu_item_new_with_label (_ ("File"));
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), menu);
   gtk_menu_shell_append (GTK_MENU_SHELL (menubar), item);
 
-  item = gtk_menu_item_new_with_label ("Save...");
+  item = gtk_menu_item_new_with_label (_ ("Export..."));
   g_signal_connect (G_OBJECT (item), "activate",
                     G_CALLBACK (save_dialogue), NULL);
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
@@ -691,7 +744,7 @@ build_menu (GtkWidget *vbox)
   item = gtk_separator_menu_item_new();
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
 
-  item = gtk_menu_item_new_with_label ("Quit");
+  item = gtk_menu_item_new_with_label (_ ("Quit"));
   g_signal_connect (G_OBJECT (item), "activate",
                     G_CALLBACK (vis_quit), NULL);
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
@@ -699,11 +752,11 @@ build_menu (GtkWidget *vbox)
   /********* edit ********/
 
   menu = gtk_menu_new();
-  item = gtk_menu_item_new_with_label ("Preferences");
+  item = gtk_menu_item_new_with_label (_ ("Preferences"));
   gtk_menu_item_set_submenu (GTK_MENU_ITEM (item), menu);
   gtk_menu_shell_append (GTK_MENU_SHELL (menubar), item);
 
-  item = gtk_menu_item_new_with_label ("Environment");
+  item = gtk_menu_item_new_with_label (_ ("Environment"));
   g_signal_connect (G_OBJECT (item), "activate",
                     G_CALLBACK (preferences), NULL);
   gtk_menu_shell_append (GTK_MENU_SHELL (menu), item);
@@ -798,7 +851,7 @@ main (int ac, char *av[])
   //  gtk_window_set_default_size (GTK_WINDOW (window), width, height);
   g_signal_connect (window, "destroy", G_CALLBACK (vis_quit), NULL);
 
-  gtk_window_set_title (GTK_WINDOW (window), "Visualiser");
+  gtk_window_set_title (GTK_WINDOW (window), _ ("Visualiser"));
 
   GtkWidget *vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 8);
   gtk_container_add (GTK_CONTAINER (window), vbox);

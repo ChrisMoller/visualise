@@ -1,3 +1,7 @@
+#ifdef HAVE_CONFIG_H
+#include "../config.h"
+#endif
+
 #define _GNU_SOURCE
 #include <gtk/gtk.h>
 #include <malloc.h>
@@ -15,10 +19,10 @@ extern double key_x;
 extern double key_y;
 extern label_s *labels;
 
-typedef void (*parse_fcn)(curve_s *curve, char *str);
+typedef void (*parse_curve_fcn)(curve_s *curve, char *str);
 
 static void
-parse_colour (curve_s *curve, char *str)
+parse_curve_colour (curve_s *curve, char *str)
 {
   GdkRGBA rgba = {1.0, 0.0, 0.0, 1.0};
   if (str) gdk_rgba_parse (&rgba, str);
@@ -26,26 +30,84 @@ parse_colour (curve_s *curve, char *str)
 }
 
 static void
-parse_weight (curve_s *curve, char *str)
+parse_curve_weight (curve_s *curve, char *str)
 {
   curve_weight (curve) = strtod (str, NULL);
 }
 
 typedef struct {
   char *key;
-  parse_fcn fcn;
-} parse_ops_s;
-#define parse_ops_key(p) ((p)->key)
-#define parse_ops_fcn(p) ((p)->fcn)
+  parse_curve_fcn fcn;
+} parse_curve_ops_s;
+#define parse_curve_ops_key(p) ((p)->key)
+#define parse_curve_ops_fcn(p) ((p)->fcn)
 
-parse_ops_s parse_ops[] = {
-  {"color",	parse_colour},
-  {"colour",	parse_colour},
-  {"weight",	parse_weight},
+parse_curve_ops_s parse_curve_ops[] = {
+  {"color",	parse_curve_colour},
+  {"colour",	parse_curve_colour},
+  {"weight",	parse_curve_weight},
 };
 
-static GHashTable *parse_hash = NULL;
+static GHashTable *parse_curve_hash = NULL;
 
+typedef void (*parse_label_fcn)(label_s *label, char *str);
+
+static void
+parse_label_angle (label_s *label, char *str)
+{
+  label_angle (label) = strtod (str, NULL) / 180.0 * M_PI;
+}
+
+static void
+parse_label_colour (label_s *label, char *str)
+{
+  GdkRGBA rgba = {1.0, 0.0, 0.0, 1.0};
+  if (str) gdk_rgba_parse (&rgba, str);
+  label_rgba (label) = gdk_rgba_copy (&rgba);
+}
+
+static void
+parse_label_font (label_s *label, char *str)
+{
+  /***
+      examples:
+
+      [FAMILY-LIST] [STYLE-OPTIONS] [SIZE]
+
+      where [FAMILY-LIST] is Sans, Serif, Normal, Monoface, etc.
+      can be comma-separated list:  Sans,Serif
+
+      [STYLE-OPTIONS]
+   style:   none or one of Normal, Oblique, Italic
+   weight:  none or one of Ultra-Light, Light, Normal, Bold, Ultra-Bold, Heavy
+   variant: none or one of Normal, Small-Caps
+   stretch: none or one of Ultra-Condensed, Extra-Condensed, Condensed,
+                           Semi-Condensed, Normal, Semi-Expanded,
+			   Expanded, Extra-Expanded, Ultra-Expanded
+
+      [SIZE] in points
+      
+      Sans Bold 12
+      Serif 16
+  ***/
+  label_font (label) = pango_font_description_from_string (str);
+}
+
+typedef struct {
+  char *key;
+  parse_label_fcn fcn;
+} parse_label_ops_s;
+#define parse_label_ops_key(p) ((p)->key)
+#define parse_label_ops_fcn(p) ((p)->fcn)
+
+parse_label_ops_s parse_label_ops[] = {
+  {"color",	parse_label_colour},
+  {"colour",	parse_label_colour},
+  {"angle",	parse_label_angle},
+  {"font",	parse_label_font},
+};
+
+static GHashTable *parse_label_hash = NULL;
 
 node_u
 create_value_node (double v)
@@ -140,17 +202,20 @@ create_curve (char *name, param_s *options, node_u expression)
   curve_rgba (curve)	 = NULL;
   curve_weight (curve)	 = 1.0;
   if (options) {
-    if (!parse_hash) {
-      parse_hash = g_hash_table_new (g_str_hash, g_str_equal);
-      for (int i = 0; i < sizeof(parse_ops) / sizeof(parse_ops_s); i++) 
-	g_hash_table_insert (parse_hash, parse_ops_key (&parse_ops[i]),
-			     &parse_ops[i]);	
+    if (!parse_curve_hash) {
+      parse_curve_hash = g_hash_table_new (g_str_hash, g_str_equal);
+      for (int i = 0;
+	   i < sizeof(parse_curve_ops) / sizeof(parse_curve_ops_s); i++) 
+	g_hash_table_insert (parse_curve_hash,
+			     parse_curve_ops_key (&parse_curve_ops[i]),
+			     &parse_curve_ops[i]);	
     }
     param_s *opt;
     for (opt = options; opt; opt = param_next (opt)) {
-      parse_ops_s *pp = g_hash_table_lookup (parse_hash, param_kwd (opt));
+      parse_curve_ops_s *pp =
+	g_hash_table_lookup (parse_curve_hash, param_kwd (opt));
       if (pp) {
-	parse_fcn fcn = parse_ops_fcn (pp);
+	parse_curve_fcn fcn = parse_curve_ops_fcn (pp);
 	if (fcn) (*fcn)(curve, param_val (opt));
 	else g_print ("error\n");	// fixme
       }
@@ -231,12 +296,42 @@ set_key_numeric (node_u xloc, node_u yloc)
 }
 
 void
-create_label (node_u x, node_u y, char *str)
+create_label (param_s *options, node_u x, node_u y, char *str)
 {
   label_s *label = malloc (sizeof(label_s));
   label_x (label) = evaluate_phrase (x) / 100.0;
   label_y (label) = evaluate_phrase (y) / 100.0;
+  label_angle (label) = 0.0;
+  label_font (label) = NULL;
+  label_rgba (label) = NULL;
   label_string (label) = str;
+  if (options) {
+    if (!parse_label_hash) {
+      parse_label_hash = g_hash_table_new (g_str_hash, g_str_equal);
+      for (int i = 0;
+	   i < sizeof(parse_label_ops) / sizeof(parse_label_ops_s); i++) 
+	g_hash_table_insert (parse_label_hash,
+			     parse_label_ops_key (&parse_label_ops[i]),
+			     &parse_label_ops[i]);	
+    }
+    param_s *opt;
+    for (opt = options; opt; opt = param_next (opt)) {
+      parse_label_ops_s *pp =
+	g_hash_table_lookup (parse_label_hash, param_kwd (opt));
+      if (pp) {
+	parse_label_fcn fcn = parse_label_ops_fcn (pp);
+	if (fcn) (*fcn)(label, param_val (opt));
+	else g_print ("error\n");	// fixme
+      }
+      else g_print ("error\n");	// fixme
+    }
+  }
+
+  if (!label_rgba (label)) {
+    GdkRGBA rgba = {1.0, 0.0, 0.0, 1.0};
+    label_rgba (label) = gdk_rgba_copy (&rgba);
+  }
+
   label_next (label) = NULL;
   if (labels) label_next (labels) = label;
   else labels = label;

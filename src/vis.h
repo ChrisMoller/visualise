@@ -140,21 +140,27 @@ typedef struct {
 struct _label_s {
   double   x;
   double   y;
+  double   angle;
+  PangoFontDescription *font;
+  GdkRGBA *rgba;
   char    *string;
   label_s *next;
 };
 #define label_x(l)	((l)->x)
 #define label_y(l)	((l)->y)
+#define label_angle(l)	((l)->angle)
+#define label_font(l)	((l)->font)
+#define label_rgba(l)	((l)->rgba)
 #define label_string(l)	((l)->string)
 #define label_next(l)	((l)->next)
 
 #define KEY_LOC_OFF	-1.0
 #define KEY_LOC_TOP	 5.0
-#define KEY_LOC_MIDDLE	35.0
-#define KEY_LOC_BOTTOM	75.0
+#define KEY_LOC_MIDDLE	50.0
+#define KEY_LOC_BOTTOM	95.0
 #define KEY_LOC_LEFT	 5.0
-#define KEY_LOC_CENTRE	35.0
-#define KEY_LOC_RIGHT	75.0
+#define KEY_LOC_CENTRE	50.0
+#define KEY_LOC_RIGHT	95.0
 
 double   evaluate_phrase (node_u node);
 void     show_node (int indent, node_u node);
