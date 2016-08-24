@@ -53,6 +53,12 @@ static GHashTable *parse_curve_hash = NULL;
 typedef void (*parse_label_fcn)(label_s *label, char *str);
 
 static void
+parse_label_stretch (label_s *label, char *str)
+{
+  label_stretch (label) = atoi (str);
+}
+
+static void
 parse_label_angle (label_s *label, char *str)
 {
   label_angle (label) = strtod (str, NULL) / 180.0 * M_PI;
@@ -104,6 +110,7 @@ parse_label_ops_s parse_label_ops[] = {
   {"color",	parse_label_colour},
   {"colour",	parse_label_colour},
   {"angle",	parse_label_angle},
+  {"stretch",	parse_label_stretch},
   {"font",	parse_label_font},
 };
 
@@ -302,6 +309,7 @@ create_label (param_s *options, node_u x, node_u y, char *str)
   label_x (label) = evaluate_phrase (x) / 100.0;
   label_y (label) = evaluate_phrase (y) / 100.0;
   label_angle (label) = 0.0;
+  label_stretch (label) = 0;
   label_font (label) = NULL;
   label_rgba (label) = NULL;
   label_string (label) = str;

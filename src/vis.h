@@ -141,18 +141,20 @@ struct _label_s {
   double   x;
   double   y;
   double   angle;
+  int      stretch;
   PangoFontDescription *font;
   GdkRGBA *rgba;
   char    *string;
   label_s *next;
 };
-#define label_x(l)	((l)->x)
-#define label_y(l)	((l)->y)
-#define label_angle(l)	((l)->angle)
-#define label_font(l)	((l)->font)
-#define label_rgba(l)	((l)->rgba)
-#define label_string(l)	((l)->string)
-#define label_next(l)	((l)->next)
+#define label_x(l)	 ((l)->x)
+#define label_y(l)	 ((l)->y)
+#define label_angle(l)	 ((l)->angle)
+#define label_stretch(l) ((l)->stretch)
+#define label_font(l)	 ((l)->font)
+#define label_rgba(l)	 ((l)->rgba)
+#define label_string(l)	 ((l)->string)
+#define label_next(l)	 ((l)->next)
 
 #define KEY_LOC_OFF	-1.0
 #define KEY_LOC_TOP	 5.0

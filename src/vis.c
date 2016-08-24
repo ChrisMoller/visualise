@@ -47,11 +47,48 @@ static GtkWidget *da		= NULL;
 static cairo_surface_t *surface	= NULL;
 static GtkAdjustment *vadj	= NULL;
 
+static double
+draw_key (cairo_t *cr, double key_x, double key_offset,
+	  double width, curve_s *curve)
+{
+  if (!curve) return key_offset;
+  
+  cairo_move_to (cr, key_x * width / 100.0, key_offset);
+  cairo_line_to (cr, 30.0 + key_x * width / 100.0, key_offset);
+  cairo_stroke (cr);
+
+  if (curve_name (curve)) {
+    PangoLayout *layout = pango_cairo_create_layout (cr);
+    pango_layout_set_text (layout, curve_name (curve), -1);
+
+    PangoFontDescription *desc =
+    pango_font_description_from_string ("Sans 8");
+
+    pango_layout_set_font_description (layout, desc);
+    pango_font_description_free (desc);
+
+    PangoRectangle logical_rect;
+    pango_layout_get_pixel_extents (layout, NULL, &logical_rect);
+
+    double line_height = (double)logical_rect.height;
+    key_offset += line_height;
+    cairo_move_to (cr, 40.0 + key_x * width / 100.0,
+		   key_offset - (line_height + 7.0));
+
+    pango_cairo_show_layout (cr, layout);
+  }
+  else key_offset += 20.0;
+
+  return key_offset;
+}
+
 static void
 draw_label (cairo_t *cr, double width, double height, label_s *label)
 {
   if (!label) return;
 
+  // https://developer.gnome.org/pango/stable/pango-Layout-Objects.html
+  // https://developer.gnome.org/pango/stable/pango-Text-Attributes.html
 
   PangoLayout *layout = pango_cairo_create_layout (cr);
   pango_layout_set_text (layout, label_string (label), -1);
@@ -78,13 +115,24 @@ draw_label (cairo_t *cr, double width, double height, label_s *label)
 
   cairo_rotate (cr, -label_angle (label));
 
+  PangoAttribute *spacing =
+    pango_attr_letter_spacing_new (label_stretch (label) * PANGO_SCALE);
+  PangoAttrList *attrlist = pango_attr_list_new ();
+  pango_attr_list_insert (attrlist, spacing);
+  pango_layout_set_attributes (layout, attrlist);
+  
+  
   pango_cairo_update_layout (cr, layout);
 
+  
   // pango_layout_get_size (layout, &width, &height);
 
   pango_cairo_show_layout (cr, layout);
 
-  cairo_stroke (cr);
+  //  cairo_stroke (cr);
+
+  pango_attribute_destroy (spacing);
+  pango_attr_list_unref (attrlist);
   
   cairo_restore (cr);
 }
@@ -169,15 +217,8 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
 	cairo_stroke (cr);
       }
 
-      if (key_x >= 0.0 && key_y >= 0.0) {
-	cairo_move_to (cr, key_x * width / 100.0, key_offset);
-	cairo_line_to (cr, 30.0 + key_x * width / 100.0, key_offset);
-	cairo_move_to (cr, 40.0 + key_x * width / 100.0,
-		       key_offset - 15.0);
-	if (curve_name (curve)) cairo_show_text (cr, curve_name (curve));
-	key_offset += KEY_OFFSET_INCR;
-	cairo_stroke (cr);
-      }
+      if (key_x >= 0.0 && key_y >= 0.0) 
+	key_offset = draw_key (cr, key_x, key_offset, width, curve);
     }
   }
 
