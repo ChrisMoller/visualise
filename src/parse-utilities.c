@@ -11,13 +11,14 @@
 #include "vis.h"
 
 extern GHashTable *vbls;
-extern GList *svbls;
-extern vbl_s *ivar;
-extern range_s range;
-extern GdkRGBA *bg_colour;
-extern double key_x;
-extern double key_y;
-extern label_s *labels;
+extern GList      *svbls;
+extern vbl_s      *ivar;
+extern range_s     range;
+extern GdkRGBA    *bg_colour;
+extern double      key_x;
+extern double      key_y;
+extern label_s    *labels;
+extern mode_e      plot_mode;
 
 typedef void (*parse_curve_fcn)(curve_s *curve, char *str);
 
@@ -290,6 +291,9 @@ set_key_alpha (char *loc)
       case 'R':
 	key_x = KEY_LOC_RIGHT;
 	break;
+      default:
+	// fixme
+	break;
       }
     }
   }
@@ -300,6 +304,27 @@ set_key_numeric (node_u xloc, node_u yloc)
 {
   key_x = evaluate_phrase (xloc);
   key_y = evaluate_phrase (yloc);
+}
+
+void
+set_mode (char *mode)
+{
+  if (!mode) return;
+  switch (*mode) {
+  case 'p':
+  case 'P':
+    plot_mode = MODE_POLAR;
+    break;
+  case 'r':
+  case 'R':
+  case 'c':
+  case 'C':
+    plot_mode = MODE_CARTESIAN;
+    break;
+  default:
+    // fixme
+    break;
+  }
 }
 
 void

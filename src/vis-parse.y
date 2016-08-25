@@ -80,6 +80,7 @@ commands: SETLABEL options
 	        { create_vbl ($2, NULL, $4, $6); }
 	| SETYRANGE LEFT_BRACKET phrase COMMA phrase RIGHT_BRACKET
 	        { create_range ($3, $5); }
+	| SETMODE anystring { set_mode ($2); }
 	;
 
 keyarg  : anystring { set_key_alpha ($1); }

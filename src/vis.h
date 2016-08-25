@@ -164,6 +164,11 @@ struct _label_s {
 #define KEY_LOC_CENTRE	50.0
 #define KEY_LOC_RIGHT	95.0
 
+typedef enum {
+  MODE_CARTESIAN,
+  MODE_POLAR
+} mode_e;
+
 double   evaluate_phrase (node_u node);
 void     show_node (int indent, node_u node);
 

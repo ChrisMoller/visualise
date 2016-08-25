@@ -24,29 +24,31 @@
 
 void set_string (const char *s);
 void delete_buffer();
-int yyparse (curve_s **curve);
+int  yyparse (curve_s **curve);
+
 static void force_redraw ();
 
 GHashTable *vbls	= NULL;
-GList *svbls		= NULL;
-vbl_s *ivar		= NULL;
-range_s range		= {-MAXDOUBLE, MAXDOUBLE};
-GdkRGBA *bg_colour	= NULL;
-double key_x		= KEY_LOC_LEFT;
-double key_y		= KEY_LOC_TOP;
-label_s *labels		= NULL;
+GList      *svbls	= NULL;
+vbl_s      *ivar	= NULL;
+range_s     range	= {-MAXDOUBLE, MAXDOUBLE};
+GdkRGBA    *bg_colour	= NULL;
+double      key_x	= KEY_LOC_LEFT;
+double      key_y	= KEY_LOC_TOP;
+label_s    *labels	= NULL;
+mode_e      plot_mode	= MODE_CARTESIAN;
 
 #define DEFAULT_WIDTH  480
 #define DEFAULT_HEIGHT 320
 
-static gint width		= DEFAULT_WIDTH;
-static gint height		= DEFAULT_HEIGHT;
-static gdouble granularity	= 1.0;
-static GList *curves		= NULL;
-static GtkWidget *window	= NULL;
-static GtkWidget *da		= NULL;
-static cairo_surface_t *surface	= NULL;
-static GtkAdjustment *vadj	= NULL;
+static gint             width		= DEFAULT_WIDTH;
+static gint             height		= DEFAULT_HEIGHT;
+static gdouble          granularity	= 1.0;
+static GList           *curves		= NULL;
+static GtkWidget       *window		= NULL;
+static GtkWidget       *da		= NULL;
+static cairo_surface_t *surface		= NULL;
+static GtkAdjustment   *vadj		= NULL;
 
 static void
 fc_fonts ()
@@ -141,8 +143,6 @@ draw_label (cairo_t *cr, double width, double height, label_s *label)
 			 label_rgba (label)->blue,
 			 label_rgba (label)->alpha);
 
-  /* rotate here */
-  
   cairo_move_to (cr, label_x (label) * width, label_y (label) * height);
 
   cairo_rotate (cr, -label_angle (label));
@@ -155,9 +155,6 @@ draw_label (cairo_t *cr, double width, double height, label_s *label)
   
   
   pango_cairo_update_layout (cr, layout);
-
-  
-  // pango_layout_get_size (layout, &width, &height);
 
   pango_cairo_show_layout (cr, layout);
 
@@ -198,24 +195,32 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
   cairo_rectangle (cr, 0.0, 0.0, width, height);
   cairo_fill (cr);
   
+  double min_x =  MAXDOUBLE;
+  double max_x = -MAXDOUBLE;
   double min_y =  MAXDOUBLE;
   double max_y = -MAXDOUBLE;
   double scale_x;
   double scale_y;
+  double h_offset;
+  double v_offset;
   double key_offset = 0;
   
 #define xformx(xx) (((xx) - vbl_min (ivar)) * scale_x)
 #define xformy(yy) (height - ((yy) - min_y) * scale_y)
+#define pxformx(xx) (h_offset + (xx) * scale_x)
+#define pxformy(yy) (v_offset - (yy)  * scale_y)
   
 #define KEY_OFFSET_INCR 15.0
 
-  void scale_curve (gpointer data, gpointer user_data)
+  void scale_curve_cartesian (gpointer data, gpointer user_data)
   {
     curve_s *curve = data;
-    if (curve) {
-      double xi = (vbl_max (ivar) - vbl_min (ivar)) / width;
+    if (curve && ivar) {
+      min_x =  vbl_min (ivar);
+      max_x =  vbl_max (ivar);
+      double xi = (max_x - min_x) / width;
       if (xi > 0.0) {
-	for (double x = vbl_min (ivar); x <= vbl_max (ivar); x += xi) {
+	for (double x = min_x; x <= max_x; x += xi) {
 	  vbl_value (ivar) = x;
 	  double r = evaluate_phrase (curve_expression (curve));
 	  if (min_y > r && r >= range_min (range)) min_y = r;
@@ -225,25 +230,24 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
     }	
   }
 
-  void draw_curve (gpointer data, gpointer user_data)
+  void draw_curve_cartesian (gpointer data, gpointer user_data)
   {
     curve_s *curve = data;
-    if (curve) {
+    if (curve && ivar) {
       double red   = curve_rgba (curve)->red;
       double green = curve_rgba (curve)->green;
       double blue  = curve_rgba (curve)->blue;
       double alpha = curve_rgba (curve)->alpha;
       cairo_set_source_rgba (cr, red, green, blue, alpha);
       cairo_set_line_width (cr, curve_weight (curve));
-      double xi = (vbl_max (ivar) - vbl_min (ivar)) / width;
+      double xi = (max_x - min_x) / width;
       if (xi > 0.0) {
-	for (double x = vbl_min (ivar); x <= vbl_max (ivar);
-	     x += granularity * xi) {
+	for (double x = min_x; x <= max_x; x += granularity * xi) {
 	  vbl_value (ivar) = x;
 	  double r = evaluate_phrase (curve_expression (curve));
 	  double xp = xformx (x);
 	  double yp = xformy (r);
-	  if (x == vbl_min (ivar)) cairo_move_to (cr, xp, yp);
+	  if (x == min_x) cairo_move_to (cr, xp, yp);
 	  else                     cairo_line_to (cr, xp, yp);
 	}
 	cairo_stroke (cr);
@@ -254,18 +258,10 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
     }
   }
 
-  if (ivar && curves) {
-
-    /********** compute scale **********/
-    
-    g_list_foreach (curves, scale_curve, NULL);
-
-    scale_x = width  / (vbl_max (ivar) - vbl_min (ivar));
-    scale_y = height / (max_y - min_y);
-
-
+  void draw_axes_cartesian ()
+  {
     /****** axes ******/
-    
+
     double floorx, ceilx;
     axis_range (vbl_min (ivar), vbl_max (ivar), &floorx, &ceilx);
     double floory, ceily;
@@ -346,6 +342,81 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
     }
 
     cairo_stroke (cr);
+  }
+
+  void scale_curve_polar (gpointer data, gpointer user_data)
+  {
+    curve_s *curve = data;
+    if (curve && ivar) {
+      double xi = granularity * G_PI / 180.0;
+      for (double theta = vbl_min (ivar); theta <= vbl_max (ivar);
+	   theta += xi) {
+	vbl_value (ivar) = theta;
+	double r = evaluate_phrase (curve_expression (curve));
+	double dx = r * cos (theta);
+	double dy = r * sin (theta);
+	if (min_x > dx) min_x = dx;
+	if (max_x < dx) max_x = dx;
+	if (min_y > dy) min_y = dy;
+	if (max_y < dy) max_y = dy;
+      }
+    }
+  }
+
+  void draw_curve_polar (gpointer data, gpointer user_data)
+  {
+    curve_s *curve = data;
+    if (curve && ivar) {
+      double red   = curve_rgba (curve)->red;
+      double green = curve_rgba (curve)->green;
+      double blue  = curve_rgba (curve)->blue;
+      double alpha = curve_rgba (curve)->alpha;
+      cairo_set_source_rgba (cr, red, green, blue, alpha);
+      cairo_set_line_width (cr, curve_weight (curve));
+      double xi = granularity * G_PI / 180.0;
+
+      for (double theta = vbl_min (ivar); theta <= vbl_max (ivar);
+	   theta += xi) {
+	vbl_value (ivar) = theta;
+	double r = evaluate_phrase (curve_expression (curve));
+	double dx = r * cos (theta);
+	double dy = r * sin (theta);
+	double xp = pxformx (dx);
+	double yp = pxformy (dy);
+	if (theta == vbl_min (ivar)) cairo_move_to (cr, xp, yp);
+	else                     cairo_line_to (cr, xp, yp);
+      }
+      
+      cairo_stroke (cr);
+
+      if (key_x >= 0.0 && key_y >= 0.0) 
+	key_offset = draw_key (cr, key_x, key_offset, width, curve);
+    }
+  }
+
+  if (ivar && curves) {
+
+    /********** compute scale **********/
+
+    switch(plot_mode) {
+    case MODE_CARTESIAN:
+      g_list_foreach (curves, scale_curve_cartesian, NULL);
+      scale_x = width  / (max_x - min_y);
+      scale_y = height / (max_y - min_y);
+      draw_axes_cartesian ();
+      break;
+    case MODE_POLAR:
+      g_list_foreach (curves, scale_curve_polar, NULL);
+      scale_x = width  / (max_x - min_x);
+      scale_y = height / (max_y - min_y);
+      h_offset = width  * max_x / (max_x - min_x);
+      v_offset = height * max_y / (max_y - min_y);
+      if (scale_y > scale_x) scale_y = scale_x;
+      else if (scale_x > scale_y) scale_x = scale_y;
+      break;
+    default:
+      break;
+    }
 
 
     /********* labels *********/
@@ -360,9 +431,20 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
     double blk_ht = (double)g_list_length (curves) * KEY_OFFSET_INCR;
     key_offset = key_y * (height - blk_ht) / 100.0;
 
+
     /********* draw curves *********/
 
-    g_list_foreach (curves, draw_curve, NULL);
+    switch(plot_mode) {
+    case MODE_CARTESIAN:
+      g_list_foreach (curves, draw_curve_cartesian, NULL);
+      break;
+    case MODE_POLAR:
+      g_list_foreach (curves, draw_curve_polar, NULL);
+      break;
+    default:
+      break;
+    }
+      
   }
 }
 
