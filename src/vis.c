@@ -51,7 +51,10 @@ static GtkAdjustment *vadj	= NULL;
 static void
 fc_fonts ()
 {
-#define FORMAT "%{family|delete( )}\\n"
+  // https://www.freedesktop.org/software/fontconfig/fontconfig-devel/fcpatternformat.html
+  
+#define FORMAT  "%{family}  %{style}\\n"
+  // #define FORMAT "%{family|delete( )}\\n"
   if (FcInit ()) {
     FcPattern *pat = FcPatternCreate ();
     if (pat) {
