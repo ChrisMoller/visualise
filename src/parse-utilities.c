@@ -13,7 +13,7 @@
 extern GHashTable *vbls;
 extern GList *svbls;
 extern vbl_s *ivar;
-extern limits_s limits;
+extern range_s range;
 extern GdkRGBA *bg_colour;
 extern double key_x;
 extern double key_y;
@@ -237,14 +237,14 @@ create_curve (char *name, param_s *options, node_u expression)
 }
 
 void
-create_limits (node_u min, node_u max)
+create_range (node_u min, node_u max)
 {
-  if (min) limits_min (limits) = evaluate_phrase (min);
-  if (max) limits_max (limits) = evaluate_phrase (max);
-  if (limits_max (limits) < limits_min (limits)) {
-    double t = limits_min (limits);
-    limits_min (limits) = limits_max (limits);
-    limits_max (limits) = t;
+  if (min) range_min (range) = evaluate_phrase (min);
+  if (max) range_max (range) = evaluate_phrase (max);
+  if (range_max (range) < range_min (range)) {
+    double t = range_min (range);
+    range_min (range) = range_max (range);
+    range_max (range) = t;
   }
 }
 

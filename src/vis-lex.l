@@ -61,7 +61,8 @@ setvar          { return SETVAR; }
 setctrl         { return SETCTRL; }
 setbg           { return SETBG; }
 setkey          { return SETKEY; }
-ylimits         { return YLIMITS; }
+setmode         { return SETMODE; }
+setyrange       { return SETYRANGE; }
 lgamma          { yylval.f = FCN_LGAMMA;   return FUNCTION; }
 log10           { yylval.f = FCN_LOG10;    return FUNCTION; }
 asinh           { yylval.f = FCN_ASINH;    return FUNCTION; }

@@ -19,9 +19,9 @@ typedef enum {
 typedef struct {
   double min;
   double max;
-} limits_s;
-#define limits_min(l) ((l).min)
-#define limits_max(l) ((l).max)
+} range_s;
+#define range_min(l) ((l).min)
+#define range_max(l) ((l).max)
 
 typedef struct _param_s {
   char *keyword;

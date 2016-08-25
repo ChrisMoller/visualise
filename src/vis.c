@@ -30,7 +30,7 @@ static void force_redraw ();
 GHashTable *vbls	= NULL;
 GList *svbls		= NULL;
 vbl_s *ivar		= NULL;
-limits_s limits		= {-MAXDOUBLE, MAXDOUBLE};
+range_s range		= {-MAXDOUBLE, MAXDOUBLE};
 GdkRGBA *bg_colour	= NULL;
 double key_x		= KEY_LOC_LEFT;
 double key_y		= KEY_LOC_TOP;
@@ -53,7 +53,7 @@ fc_fonts ()
 {
   // https://www.freedesktop.org/software/fontconfig/fontconfig-devel/fcpatternformat.html
   
-#define FORMAT  "%{family}  %{style}\\n"
+#define FORMAT  "%{family}      %{style}\\n"
   // #define FORMAT "%{family|delete( )}\\n"
   if (FcInit ()) {
     FcPattern *pat = FcPatternCreate ();
@@ -170,7 +170,7 @@ draw_label (cairo_t *cr, double width, double height, label_s *label)
 }
 
 static void
-axis_limits (double min, double max, double *floor_p, double *ceil_p)
+axis_range (double min, double max, double *floor_p, double *ceil_p)
 {
   double intfl;
   double intce;
@@ -218,8 +218,8 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
 	for (double x = vbl_min (ivar); x <= vbl_max (ivar); x += xi) {
 	  vbl_value (ivar) = x;
 	  double r = evaluate_phrase (curve_expression (curve));
-	  if (min_y > r && r >= limits_min (limits)) min_y = r;
-	  if (max_y < r && r <= limits_max (limits)) max_y = r;
+	  if (min_y > r && r >= range_min (range)) min_y = r;
+	  if (max_y < r && r <= range_max (range)) max_y = r;
 	}
       }
     }	
@@ -267,9 +267,9 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
     /****** axes ******/
     
     double floorx, ceilx;
-    axis_limits (vbl_min (ivar), vbl_max (ivar), &floorx, &ceilx);
+    axis_range (vbl_min (ivar), vbl_max (ivar), &floorx, &ceilx);
     double floory, ceily;
-    axis_limits (min_y, max_y, &floory, &ceily);
+    axis_range (min_y, max_y, &floory, &ceily);
     
     double ddx = ceilx - floorx;
     double ddy = ceily - floory;

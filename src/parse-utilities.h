@@ -10,7 +10,7 @@ node_u   create_function_node (fcn_e fcn, node_u node);
 void     create_vbl (char *name, node_u value, node_u min, node_u max);
 void     create_label (param_s *options, node_u x, node_u y, char *str);
 curve_s *create_curve (char *name, param_s *options, node_u expression);
-void     create_limits (node_u min, node_u max);
+void     create_range (node_u min, node_u max);
 void     set_bg (char *colour);
 void	 set_key_alpha (char *loc);
 void	 set_key_numeric (node_u xloc, node_u yloc);

@@ -24,12 +24,13 @@
   param_s *p;
 };
 
+%token	    SETMODE
 %token	    SETCTRL
 %token	    SETLABEL
 %token	    SETVAR
 %token	    SETBG
 %token	    SETKEY
-%token	    YLIMITS
+%token	    SETYRANGE
 %token	<v> NUMBER
 %token  <s> STRING
 %token  <s> QSTRING
@@ -63,19 +64,22 @@
 %%
 
 stmt	:	/* null */
-	| stmt SETLABEL options
-              LEFT_BRACKET phrase COMMA phrase RIGHT_BRACKET QSTRING
-                 { create_label ($3, $5, $7, $9); }
-	| stmt SETKEY keyarg
-	| stmt SETBG anystring { set_bg ($3); }
+	| stmt commands
 	| stmt optname options phrase
-                { if (curve) *curve = create_curve ($2, $3, $4); }
-  | stmt SETCTRL STRING phrase LEFT_BRACKET phrase COMMA phrase RIGHT_BRACKET
-	        { create_vbl ($3, $4, $6, $8); }
-	| stmt SETVAR STRING LEFT_BRACKET phrase COMMA phrase RIGHT_BRACKET
-	        { create_vbl ($3, NULL, $5, $7); }
-	| stmt YLIMITS LEFT_BRACKET phrase COMMA phrase RIGHT_BRACKET
-	        { create_limits ($4, $6); }
+            { if (curve) *curve = create_curve ($2, $3, $4); }
+	;
+
+commands: SETLABEL options
+              LEFT_BRACKET phrase COMMA phrase RIGHT_BRACKET QSTRING
+                 { create_label ($2, $4, $6, $8); }
+	| SETKEY keyarg
+	| SETBG anystring { set_bg ($2); }
+	| SETCTRL STRING phrase LEFT_BRACKET phrase COMMA phrase RIGHT_BRACKET
+	        { create_vbl ($2, $3, $5, $7); }
+	| SETVAR STRING LEFT_BRACKET phrase COMMA phrase RIGHT_BRACKET
+	        { create_vbl ($2, NULL, $4, $6); }
+	| SETYRANGE LEFT_BRACKET phrase COMMA phrase RIGHT_BRACKET
+	        { create_range ($3, $5); }
 	;
 
 keyarg  : anystring { set_key_alpha ($1); }
