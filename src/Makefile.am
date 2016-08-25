@@ -11,9 +11,11 @@ DISTCLEANFILES = .deps/*.P
 
 
 vis_CFLAGS = -std=c99 -Wall -Werror \
-              $(GTK_CFLAGS) $(CAIRO_CFLAGS) $(MAGICKWAND_CFLAGS)
+              $(GTK_CFLAGS) $(CAIRO_CFLAGS) $(MAGICKWAND_CFLAGS)  \
+              $(FONTCONFIG_CFLAGS)
 
-vis_LDFLAGS = -lm $(GTK_LIBS) $(CAIRO_LIBS) $(MAGICKWAND_LIBS)
+vis_LDFLAGS = -lm $(GTK_LIBS) $(CAIRO_LIBS) $(MAGICKWAND_LIBS) \
+              $(FONTCONFIG_LIBS)
 
 # -leak-check=full
 #  algrind --tool=memcheck --leak-check=full --leak-resolution=high -

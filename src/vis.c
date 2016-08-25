@@ -8,6 +8,7 @@
 #include <cairo/cairo-pdf.h>
 #include <cairo/cairo-ps.h>
 #include <cairo/cairo-svg.h>
+#include <fontconfig/fontconfig.h>
 #include <alloca.h>
 #include <malloc.h>
 #include <stdio.h>
@@ -46,6 +47,34 @@ static GtkWidget *window	= NULL;
 static GtkWidget *da		= NULL;
 static cairo_surface_t *surface	= NULL;
 static GtkAdjustment *vadj	= NULL;
+
+static void
+fc_fonts ()
+{
+#define FORMAT "%{family|delete( )}\\n"
+  if (FcInit ()) {
+    FcPattern *pat = FcPatternCreate ();
+    if (pat) {
+      FcFontSet *fs  = FcFontList (0, pat, NULL);
+      if (fs) {
+	FILE *sort = popen ("sort -f | uniq", "w");
+	if (sort) {
+	  for (int j = 0; j < fs->nfont; j++) {
+	    FcChar8 *s = FcPatternFormat (fs->fonts[j], (FcChar8 *)FORMAT);
+	    if (s) {
+	      fprintf (sort, "%s", s);
+	      free (s);
+	    }
+	  }
+	  pclose (sort);
+	}
+	FcFontSetDestroy (fs);
+      }
+      FcPatternDestroy (pat);
+    }
+    FcFini ();
+  }
+}
 
 static double
 draw_key (cairo_t *cr, double key_x, double key_offset,
@@ -814,11 +843,14 @@ main (int ac, char *av[])
   GError *error = NULL;
   gchar **vars  = NULL;
   gchar **files = NULL;
+  gboolean list_fonts = FALSE;
   GOptionEntry entries[] = {
     { "setvar", 'v', 0, G_OPTION_ARG_STRING_ARRAY,
       &vars, "Set variable.", NULL },
     { "source", 's', 0, G_OPTION_ARG_STRING_ARRAY,
       &files, "Source file.", NULL },
+    { "fonts", 'f', 0, G_OPTION_ARG_NONE,
+      &list_fonts, "List available fonts.", NULL },
     { NULL }
   };
 
@@ -831,6 +863,11 @@ main (int ac, char *av[])
   if (!g_option_context_parse (context, &ac, &av, &error)) {
     g_warning ("option parsing failed: %s\n", error->message);
     g_clear_error (&error);
+  }
+
+  if (list_fonts) {
+    fc_fonts ();
+    return 0;
   }
 
 #if 0
