@@ -1,0 +1,16 @@
+vis is an interactive function visualisr.  Given input like
+
+setvar x [-7.0, 2.2]
+
+setctrl Amplitude 1.0 [-2, 2]
+setctrl Phase 0.0 [-2, 2]
+
+"cos" {colour = "blue"} Amplitude * cos(Phase + x)
+
+it will plot the given curve across the given range of x ([-7.0, 2.2]) and
+provide controls that allow the user to vary the given control variables
+Amplitude and Phase across the given ranges with the given initial values.
+
+Any number of curves can be shown simultaneously, using any number of control
+variables.  See the src/tests directory for a couple of examplss and a longer
+description ofthe input file format.
