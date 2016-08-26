@@ -167,11 +167,15 @@ draw_label (cairo_t *cr, double width, double height, label_s *label)
 }
 
 static void
-axis_range (double min, double max, double *floor_p, double *ceil_p)
+axis_range (double min, double max,
+	    double *floor_p, double *ceil_p,
+	    double *expfl_p,
+	    double *expce_p)
 {
-  double intfl;
-  double intce;
-  double fl, ce;
+  double intfl = 0.0;
+  double intce = 0.0;
+  double fl;
+  double ce;
 
   if (min == 0.0) fl = 0.0;
   else {
@@ -181,6 +185,7 @@ axis_range (double min, double max, double *floor_p, double *ceil_p)
     fl = floor (copysign (fl, min)) / 10.0;
   }
   if (floor_p) *floor_p = fl;
+  if (expfl_p) *expfl_p = intfl;
 
   if (max == 0.0) ce = 0.0;
   else {
@@ -190,6 +195,7 @@ axis_range (double min, double max, double *floor_p, double *ceil_p)
     ce = ceil  (copysign (ce, max)) / 10.0;
   }
   if (ceil_p)  *ceil_p  = ce;
+  if (expce_p) *expce_p = intce;
 }
 
 static void
@@ -274,9 +280,9 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
     /****** axes ******/
 
     double floorx, ceilx;
-    axis_range (vbl_min (ivar), vbl_max (ivar), &floorx, &ceilx);
+    axis_range (vbl_min (ivar), vbl_max (ivar), &floorx, &ceilx, NULL, NULL);
     double floory, ceily;
-    axis_range (min_y, max_y, &floory, &ceily);
+    axis_range (min_y, max_y, &floory, &ceily, NULL, NULL);
     
     double ddx = ceilx - floorx;
     double ddy = ceily - floory;
@@ -413,7 +419,9 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
     double dd;
     double ceil;
 
-    axis_range (0.0, max_ext, NULL, &ceil);
+    double ce;
+    axis_range (0.0, max_ext, NULL, &ceil, NULL, &ce);
+    ce =  pow (10.0, ce);
     double len = fabs (h_offset);
     if (len < fabs (v_offset)) len = fabs (v_offset);
     if (len < height - fabs (v_offset)) len = height - fabs (v_offset);
@@ -422,7 +430,7 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
     double least_delta = MAXDOUBLE;
     int least_idx = -1;
     for (int i = 0; i < sizeof(splits) / sizeof(double); i++) {
-      double delta = fabs (TARGET_INC - (len / (splits[i] * ceil)));
+      double delta = fabs (TARGET_INC - (len / (splits[i] * ce * ceil)));
       if (least_delta > delta) {
 	least_delta = delta;
 	least_idx = i;
@@ -444,6 +452,7 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
 	cairo_move_to (cr, pxformx (dd), pxformy (0.0) - 10.0);
 	double rdx = nearbyint (10.0 * dd) / 10.0;
 	gchar *str = g_strdup_printf ("%0.2g", rdx);
+	g_print ("%g\n", rdx);
 	cairo_show_text (cr, str);
 	g_free (str);
       }
