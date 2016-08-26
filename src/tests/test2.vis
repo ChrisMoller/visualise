@@ -1,0 +1,14 @@
+setkey bl
+
+setbg purple
+
+setvar theta [0.0, 4.0 * pi]
+
+setctrl Amplitude 1.0 [-2, 2]
+setctrl Phase 0.0 [-2, 2]
+
+setmode polar
+
+"curl" {weight = "4.5" colour = "#00ff00"} Amplitude * (Phase + theta)
+"curl" {colour = red} 5.0 * Amplitude * sin (Phase * theta)
+

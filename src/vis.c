@@ -31,7 +31,7 @@ static void force_redraw ();
 GHashTable *vbls	= NULL;
 GList      *svbls	= NULL;
 vbl_s      *ivar	= NULL;
-range_s     range	= {-MAXDOUBLE, MAXDOUBLE};
+range_s     range	= {-MAXDOUBLE, MAXDOUBLE };
 GdkRGBA    *bg_colour	= NULL;
 double      key_x	= KEY_LOC_LEFT;
 double      key_y	= KEY_LOC_TOP;
@@ -171,15 +171,24 @@ axis_range (double min, double max, double *floor_p, double *ceil_p)
 {
   double intfl;
   double intce;
-  double fl = log10 (fabs (min));
-  double ce = log10 (fabs (max));
-  fl = modf (fl, &intfl);
-  ce = modf (ce, &intce);
-  fl = pow (10.0, 1.0 + fl);
-  ce = pow (10.0, 1.0 + ce);
-  fl = floor (copysign (fl, min)) / 10.0;
-  ce = ceil  (copysign (ce, max)) / 10.0;
+  double fl, ce;
+
+  if (min == 0.0) fl = 0.0;
+  else {
+    fl = log10 (fabs (min));
+    fl = modf (fl, &intfl);
+    fl = pow (10.0, 1.0 + fl);
+    fl = floor (copysign (fl, min)) / 10.0;
+  }
   if (floor_p) *floor_p = fl;
+
+  if (max == 0.0) ce = 0.0;
+  else {
+    ce = log10 (fabs (max));
+    ce = modf (ce, &intce);
+    ce = pow (10.0, 1.0 + ce);
+    ce = ceil  (copysign (ce, max)) / 10.0;
+  }
   if (ceil_p)  *ceil_p  = ce;
 }
 
@@ -204,6 +213,8 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
   double h_offset;
   double v_offset;
   double key_offset = 0;
+  const double splits[] = {1.0, 2.0, 5.0, 10.0};
+#define TARGET_INC	10.0
   
 #define xformx(xx) (((xx) - vbl_min (ivar)) * scale_x)
 #define xformy(yy) (height - ((yy) - min_y) * scale_y)
@@ -270,8 +281,6 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
     double ddx = ceilx - floorx;
     double ddy = ceily - floory;
 
-    double splits[] = {1.0, 2.0, 5.0, 10.0};
-#define TARGET_INC	10.0
     double least_deltax = MAXDOUBLE;
     int least_idxx = -1;
     double least_deltay = MAXDOUBLE;
@@ -394,6 +403,60 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
     }
   }
 
+  void draw_axes_polar ()
+  {
+    double max_ext = MINDOUBLE;
+    if (max_ext < fabs (min_x)) max_ext = fabs (min_x);
+    if (max_ext < fabs (max_x)) max_ext = fabs (max_x);
+    if (max_ext < fabs (min_y)) max_ext = fabs (min_y);
+    if (max_ext < fabs (max_y)) max_ext = fabs (max_y);
+    double dd;
+    double ceil;
+
+    axis_range (0.0, max_ext, NULL, &ceil);
+    double len = fabs (h_offset);
+    if (len < fabs (v_offset)) len = fabs (v_offset);
+    if (len < height - fabs (v_offset)) len = height - fabs (v_offset);
+    if (len < width  - fabs (h_offset)) len = width  - fabs (h_offset);
+
+    double least_delta = MAXDOUBLE;
+    int least_idx = -1;
+    for (int i = 0; i < sizeof(splits) / sizeof(double); i++) {
+      double delta = fabs (TARGET_INC - (len / (splits[i] * ceil)));
+      if (least_delta > delta) {
+	least_delta = delta;
+	least_idx = i;
+      }
+    }
+
+    double incr = 1.0 / splits[least_idx];
+    
+    cairo_set_line_width (cr, 0.5);
+    cairo_set_source_rgba (cr, 0.0, 0.0, 0.0, 1.0);
+
+    double tt;
+    for (tt = 0.0, dd = 0.0; dd <= max_ext; dd += incr, tt += 1.0) {
+      double rtt = nearbyint (10.0 * tt) / 10.0;
+      if (0.0 == fmod (rtt, splits[least_idx])) {
+	cairo_move_to (cr, pxformx (dd), pxformy (0.0) - 10.0);
+	cairo_new_sub_path (cr);
+	cairo_arc (cr, h_offset, v_offset, dd * scale_x, 0.0, 2.0 * G_PI);
+	cairo_move_to (cr, pxformx (dd), pxformy (0.0) - 10.0);
+	double rdx = nearbyint (10.0 * dd) / 10.0;
+	gchar *str = g_strdup_printf ("%0.2g", rdx);
+	cairo_show_text (cr, str);
+	g_free (str);
+      }
+      else {
+	cairo_move_to (cr, pxformx (dd), pxformy (0.0) - 5.0);
+	cairo_line_to (cr, pxformx (dd), pxformy (0.0) + 5.0);
+      }
+    }
+
+    cairo_stroke (cr);
+  }
+    /****** axes ******/
+
   if (ivar && curves) {
 
     /********** compute scale **********/
@@ -409,10 +472,11 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
       g_list_foreach (curves, scale_curve_polar, NULL);
       scale_x = width  / (max_x - min_x);
       scale_y = height / (max_y - min_y);
-      h_offset = width  * max_x / (max_x - min_x);
-      v_offset = height * max_y / (max_y - min_y);
+      h_offset = width  * fabs (min_x) / (max_x - min_x);
+      v_offset = height * fabs (max_y) / (max_y - min_y);
       if (scale_y > scale_x) scale_y = scale_x;
       else if (scale_x > scale_y) scale_x = scale_y;
+      draw_axes_polar ();
       break;
     default:
       break;

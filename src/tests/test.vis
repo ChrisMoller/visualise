@@ -1,0 +1,69 @@
+
+# parameters and arguments that consist of a purely alphanumeric string that
+# starts with an alpha don't have to be quoted, otherwise they do
+
+# accepts args of off tl, tc, tr, ml, mc, mr, bl, bc, or br, in any order
+# or a coordinate in the form of [x, y], where x and y are percentages of the
+# drawing area width and height respectively.
+
+setkey bl
+
+
+# colours may be specified either by name, quoted or unquoted, or in any
+# of the forms "#rrggbb", "rgb(r, g, b)", or "rgba(r, g, b, a)".  all three
+# of those forms must be quoted.  in the "#rrggbb" form, rr, gg, and bb are
+# hexadecimal values in the range 00 - ff; in the "rgb()" and "rgba()" forms,
+# r, g, b, and a are floating-point values in the range 0.0 - 1.0, inclusive.
+
+setbg purple
+
+
+# the variable set by setvar will be use as the independent variable in the
+# functions to be visualised.  each function will be evaluated across the
+# range given by the [min, max] parameter.
+
+setvar x [-7.0, 2.2]
+
+
+# the variables set by setctrl can be used in the functions to be visualised.
+# separate controls will be provided for each variable, allowing to be set
+# across the given [min, max] range, the initial value being set by the
+# second parameter.
+
+setctrl Amplitude 1.0 [-2, 2]
+setctrl Phase 0.0 [-2, 2]
+
+
+# ylimits clamps the displayed y range to the given range.  if omitted, the
+# limits will be calculated based on the given functions
+
+setyrange [-4, 4]
+
+
+setlabel {font = "Nimbus Mono L  Bold Oblique 16" stretch = "10"} [10, 10] "label"
+#setlabel {font = "DroidSans Bold Italic 14" stretch = "10"} [10, 10] "label"
+setlabel {angle = "45"} [20, 20] "another label"
+
+# functions can be specified with an optional quoted name (used in the key),
+# optional options, and the function itself.  functions are expressed as
+# c-like expression except that the caret (^) represents the power function
+# and bang (!), used as a prefix, represents the gamma function:  "!x" does
+# what you expect.  constants pi and e are provided for convenience (and
+# thus can't be used as independent or control variables).
+
+x
+"sin" {weight = "4.5" colour = "#00ff00"} sin(Phase + x)
+"tan" {color = orange} tan(x)
+"cos" {colour = "rgb(0, 0, 100%)"} Amplitude * cos(x)
+"one" {colour = "rgb(255, 255, 255)"} sin(x)^2 + cos(x)^2
+
+# in addition to pi and e provided as constants, vis supports the following
+# functions:
+
+#   sin,   cos,   tan   
+#  asin,  acos,  atan  
+#  sinh,  cosh,  tanh  
+# asinh, acosh, atanh 
+# log10, log, ln  (log is a synonym for ln)
+# abs, mag, exp   (mag is a synonym for abs)
+# lgamma
