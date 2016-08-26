@@ -12,5 +12,5 @@ provide controls that allow the user to vary the given control variables
 Amplitude and Phase across the given ranges with the given initial values.
 
 Any number of curves can be shown simultaneously, using any number of control
-variables.  See the src/tests directory for a couple of examplss and a longer
-description ofthe input file format.
+variables.  See the src/tests directory for a couple of examples (test.vis and
+test2.vis) and a longer description of the input file format.
