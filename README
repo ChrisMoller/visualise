@@ -14,3 +14,17 @@ Amplitude and Phase across the given ranges with the given initial values.
 Any number of curves can be shown simultaneously, using any number of control
 variables.  See the src/tests directory for a couple of examples (test.vis and
 test2.vis) and a longer description of the input file format.
+
+
+Usage:
+  vis [OPTION...] 
+
+Help Options:
+  -h, --help               Show help options
+  --help-all               Show all help options
+  --help-gtk               Show GTK+ Options
+
+Application Options:
+  -s, --source             <file>  Source file.
+  -f, --fonts              List available fonts.
+  --display=DISPLAY        X display to use

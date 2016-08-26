@@ -999,20 +999,24 @@ int
 main (int ac, char *av[])
 {
   GError *error = NULL;
+#if 0
   gchar **vars  = NULL;
+#endif
   gchar **files = NULL;
   gboolean list_fonts = FALSE;
   GOptionEntry entries[] = {
+#if 0
     { "setvar", 'v', 0, G_OPTION_ARG_STRING_ARRAY,
       &vars, "Set variable.", NULL },
+#endif
     { "source", 's', 0, G_OPTION_ARG_STRING_ARRAY,
-      &files, "Source file.", NULL },
+      &files, "<file>  Source file.", NULL },
     { "fonts", 'f', 0, G_OPTION_ARG_NONE,
       &list_fonts, "List available fonts.", NULL },
     { NULL }
   };
 
-  GOptionContext *context = g_option_context_new ("file1 file2...");
+  GOptionContext *context = g_option_context_new ("");
   g_option_context_add_main_entries (context, entries, NULL);
   g_option_context_add_group (context, gtk_get_option_group (TRUE));
 
