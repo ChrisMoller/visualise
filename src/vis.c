@@ -55,7 +55,7 @@ fc_fonts ()
 {
   // https://www.freedesktop.org/software/fontconfig/fontconfig-devel/fcpatternformat.html
   
-#define FORMAT  "%{family}      %{style}\\n"
+#define FORMAT  "\"%{family}\"      \"%{style}\"\\n"
   // #define FORMAT "%{family|delete( )}\\n"
   if (FcInit ()) {
     FcPattern *pat = FcPatternCreate ();
@@ -63,16 +63,14 @@ fc_fonts ()
       FcFontSet *fs  = FcFontList (0, pat, NULL);
       if (fs) {
 	FILE *sort = popen ("sort -f | uniq", "w");
-	if (sort) {
-	  for (int j = 0; j < fs->nfont; j++) {
-	    FcChar8 *s = FcPatternFormat (fs->fonts[j], (FcChar8 *)FORMAT);
-	    if (s) {
-	      fprintf (sort, "%s", s);
-	      free (s);
-	    }
+	for (int j = 0; j < fs->nfont; j++) {
+	  FcChar8 *s = FcPatternFormat (fs->fonts[j], (FcChar8 *)FORMAT);
+	  if (s) {
+	    fprintf (sort ? : stdout, "%s", s);
+	    free (s);
 	  }
-	  pclose (sort);
 	}
+	if (sort) pclose (sort);
 	FcFontSetDestroy (fs);
       }
       FcPatternDestroy (pat);
