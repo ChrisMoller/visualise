@@ -50,6 +50,21 @@ static GtkWidget       *da		= NULL;
 static cairo_surface_t *surface		= NULL;
 static GtkAdjustment   *vadj		= NULL;
 
+void
+complain (const gchar *msg)
+{
+  GtkWidget *dialog =
+    gtk_message_dialog_new (GTK_WINDOW (window),
+			    GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+			    GTK_MESSAGE_WARNING,
+			    GTK_BUTTONS_CLOSE,
+			    "%s", msg);
+  gtk_window_set_keep_above (GTK_WINDOW (dialog), TRUE);
+  gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
+  gtk_dialog_run (GTK_DIALOG (dialog));
+  gtk_widget_destroy (dialog);
+}
+
 static void
 fc_fonts ()
 {

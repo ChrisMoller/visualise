@@ -4,6 +4,7 @@
 
 #define _GNU_SOURCE
 #include <gtk/gtk.h>
+#include <glib/gi18n-lib.h>
 #include <malloc.h>
 #include <stdlib.h>
 #include <strings.h>
@@ -225,9 +226,14 @@ create_curve (char *name, param_s *options, node_u expression)
       if (pp) {
 	parse_curve_fcn fcn = parse_curve_ops_fcn (pp);
 	if (fcn) (*fcn)(curve, param_val (opt));
-	else g_print ("error\n");	// fixme
+	else g_print ("error\n");	// fixme -- internal error
       }
-      else g_print ("error\n");	// fixme
+      else {
+	gchar * msg = g_strdup_printf (_ ("Unrecognised curve keyword: %s"),
+				       param_kwd (opt));
+	complain (msg);
+	g_free (msg);
+      }
     }
   }
   if (!curve_rgba (curve)) {
@@ -356,7 +362,12 @@ create_label (param_s *options, node_u x, node_u y, char *str)
 	if (fcn) (*fcn)(label, param_val (opt));
 	else g_print ("error\n");	// fixme
       }
-      else g_print ("error\n");	// fixme
+      else {
+	gchar * msg = g_strdup_printf (_ ("Unrecognised label keyword: %s"),
+				       param_kwd (opt));
+	complain (msg);
+	g_free (msg);
+      }
     }
   }
 

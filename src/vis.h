@@ -171,5 +171,6 @@ typedef enum {
 
 double   evaluate_phrase (node_u node);
 void     show_node (int indent, node_u node);
+void	 complain (const gchar *msg);
 
 #endif  /* VIS_H */
