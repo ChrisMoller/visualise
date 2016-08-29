@@ -54,6 +54,7 @@ static void
 fc_fonts ()
 {
   // https://www.freedesktop.org/software/fontconfig/fontconfig-devel/fcpatternformat.html
+
   
 #define FORMAT  "\"%{family}\"      \"%{style}\"\\n"
   // #define FORMAT "%{family|delete( )}\\n"
