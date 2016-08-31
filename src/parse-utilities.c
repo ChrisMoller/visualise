@@ -5,6 +5,7 @@
 #define _GNU_SOURCE
 #include <gtk/gtk.h>
 #include <glib/gi18n-lib.h>
+#include <complex.h>
 #include <malloc.h>
 #include <stdlib.h>
 #include <strings.h>
@@ -119,7 +120,7 @@ parse_label_ops_s parse_label_ops[] = {
 static GHashTable *parse_label_hash = NULL;
 
 node_u
-create_value_node (double v)
+create_value_node (complex double v)
 {
   value_s *vv = malloc (sizeof(value_s));
   value_type (vv) = TYPE_VALUE;

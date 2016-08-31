@@ -2,7 +2,7 @@
 #define PARSE_UTILITIES_H
 
 
-node_u   create_value_node (double v);
+node_u   create_value_node (complex double v);
 node_u   create_string_node (char * s);
 node_u   create_monadic_node (op_e op, node_u node);
 node_u   create_dyadic_node (node_u l, op_e op, node_u r);

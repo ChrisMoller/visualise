@@ -108,11 +108,11 @@ extern int yydebug;
 typedef union YYSTYPE
 {
 /* Line 2058 of yacc.c  */
-#line 18 "vis-parse.y"
+#line 19 "vis-parse.y"
 
   op_e     o;
   fcn_e    f;
-  double   v;
+  complex double   v;
   node_u   n;
   char    *s;
   param_s *p;

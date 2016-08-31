@@ -8,7 +8,7 @@ typedef void *node_u;
 typedef struct _param_s param_s;
 typedef struct _label_s label_s;
 
-typedef double (*fcn_t)(double x);
+typedef complex double (*fcn_t)(complex double x);
 
 #undef FCN_DECL
 #define FCN_DECL(idx,sym) idx,
@@ -71,7 +71,7 @@ typedef struct {
 
 typedef struct {
   type_e  type;		// must be first entry
-  double  val;
+  complex double  val;
 } value_s;
 #define value_type(v) (v)->type
 #define value_val(v)  (v)->val
@@ -169,7 +169,15 @@ typedef enum {
   MODE_POLAR
 } mode_e;
 
-double   evaluate_phrase (node_u node);
+typedef enum {
+  COMPLEX_REAL,
+  COMPLEX_IMAG,
+  COMPLEX_MAGNITUDE,
+  COMPLEX_PHASE,
+  COMPLEX_PROJECTION
+} complex_e;
+
+complex double evaluate_phrase (node_u node);
 void     show_node (int indent, node_u node);
 void	 complain (const gchar *msg);
 

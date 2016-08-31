@@ -1,6 +1,7 @@
 %{
 #include <gtk/gtk.h>
 #include <alloca.h>
+#include <complex.h>
 #include <malloc.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,7 +19,7 @@
 %union {
   op_e     o;
   fcn_e    f;
-  double   v;
+  complex double   v;
   node_u   n;
   char    *s;
   param_s *p;

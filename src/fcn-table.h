@@ -3,10 +3,7 @@
 
 #include <math.h>
 
-#include <vis.h>
-
-
-//typedef double (*fcn_t)(double x);
+#include "vis.h"
 
 #undef FCN_DECL
 #define FCN_DECL(idx,sym) sym,

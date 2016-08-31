@@ -10,6 +10,7 @@
 #include <cairo/cairo-svg.h>
 #include <fontconfig/fontconfig.h>
 #include <alloca.h>
+#include <complex.h>
 #include <malloc.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,6 +19,7 @@
 
 
 #include "vis.h"
+#include "fake-complex.h"
 #include "fcn-table.h"
 #include "vis-parse.h"
 #include "magick.h"
@@ -49,6 +51,22 @@ static GtkWidget       *window		= NULL;
 static GtkWidget       *da		= NULL;
 static cairo_surface_t *surface		= NULL;
 static GtkAdjustment   *vadj		= NULL;
+static complex_e	complex_mode	= COMPLEX_REAL;
+
+static double
+project_complex (complex double z)
+{
+  double rr = NAN;
+  switch (complex_mode) {
+  case COMPLEX_REAL:		rr = creal (z);	break;
+  case COMPLEX_IMAG: 		rr = cimag (z);	break;
+  case COMPLEX_MAGNITUDE: 	rr = cabs (z);	break;
+  case COMPLEX_PHASE: 		rr = carg (z);	break;
+  case COMPLEX_PROJECTION:	/* do nothing */ break;
+  }
+  return rr;
+}
+    
 
 void
 complain (const gchar *msg)
@@ -253,7 +271,8 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
       if (xi > 0.0) {
 	for (double x = min_x; x <= max_x; x += xi) {
 	  vbl_value (ivar) = x;
-	  double r = evaluate_phrase (curve_expression (curve));
+	  complex double cx = evaluate_phrase (curve_expression (curve));
+	  double r = project_complex (cx);
 	  if (min_y > r && r >= range_min (range)) min_y = r;
 	  if (max_y < r && r <= range_max (range)) max_y = r;
 	}
@@ -275,11 +294,12 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
       if (xi > 0.0) {
 	for (double x = min_x; x <= max_x; x += granularity * xi) {
 	  vbl_value (ivar) = x;
-	  double r = evaluate_phrase (curve_expression (curve));
+	  complex double cx = evaluate_phrase (curve_expression (curve));
+	  double r = project_complex (cx);
 	  double xp = xformx (x);
 	  double yp = xformy (r);
 	  if (x == min_x) cairo_move_to (cr, xp, yp);
-	  else                     cairo_line_to (cr, xp, yp);
+	  else            cairo_line_to (cr, xp, yp);
 	}
 	cairo_stroke (cr);
       }
@@ -294,7 +314,9 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
     /****** axes ******/
 
     double floorx, ceilx;
-    axis_range (vbl_min (ivar), vbl_max (ivar), &floorx, &ceilx, NULL, NULL);
+    double ce;
+    axis_range (vbl_min (ivar), vbl_max (ivar), &floorx, &ceilx, NULL, &ce);
+    ce =  pow (10.0, ce);
     double floory, ceily;
     axis_range (min_y, max_y, &floory, &ceily, NULL, NULL);
     
@@ -335,6 +357,7 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
     cairo_move_to (cr, xformx (0.0), 0.0);	/* y axis */
     cairo_line_to (cr, xformx (0.0), height);
 
+    ceilx *= ce;
     double tt;
     for (tt = 0.0, ddx = floorx; ddx <= ceilx; ddx += incrx, tt += 1.0) {
       double rtt = nearbyint (10.0 * tt) / 10.0;
@@ -381,7 +404,8 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
       for (double theta = vbl_min (ivar); theta <= vbl_max (ivar);
 	   theta += xi) {
 	vbl_value (ivar) = theta;
-	double r = evaluate_phrase (curve_expression (curve));
+	complex double cx = evaluate_phrase (curve_expression (curve));
+	double r = project_complex (cx);
 	double dx = r * cos (theta);
 	double dy = r * sin (theta);
 	if (min_x > dx) min_x = dx;
@@ -407,7 +431,8 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
       for (double theta = vbl_min (ivar); theta <= vbl_max (ivar);
 	   theta += xi) {
 	vbl_value (ivar) = theta;
-	double r = evaluate_phrase (curve_expression (curve));
+	complex double cx = evaluate_phrase (curve_expression (curve));
+	double r = project_complex (cx);
 	double dx = r * cos (theta);
 	double dy = r * sin (theta);
 	double xp = pxformx (dx);
@@ -810,13 +835,14 @@ lookup_vbl (char *name)
 void
 show_node (int indent, node_u node)
 {
+  if (!node) return;
   switch(node_type (node)) {
   case TYPE_VALUE:
     {
       value_s *vv = node_value (node);
-      printf ("%*svalue node, value = %g\n",
+      printf ("%*svalue node, value = %g + %gI\n",
 	      indent, " ",
-	      value_val (vv));
+	      creal (value_val (vv)), cimag (value_val (vv)));
     }
     break;
   case TYPE_STRING:
@@ -862,10 +888,12 @@ show_node (int indent, node_u node)
   }
 }
 
-double
+
+complex double
 evaluate_phrase (node_u node)
 {
-  double rr = NAN;
+  complex double rr = NAN;
+  //  show_node (0, node);
 
   if (!node) return NAN;
   
@@ -896,7 +924,7 @@ evaluate_phrase (node_u node)
 	rr = -rr;
 	break;
       case SYM_BANG:
-	rr = tgamma (rr + 1.0);
+	rr = (cimag (rr) == 0.0) ? tgamma (creal (rr) + 1.0) : NAN;
 	break;
       default:
 	break;
@@ -908,8 +936,8 @@ evaluate_phrase (node_u node)
       dyadic_s *dd = node_dyadic (node);
       node_u   *left  = dyadic_left (dd);
       node_u   *right = dyadic_right (dd);
-      double l = evaluate_phrase (left);
-      double r = evaluate_phrase (right);
+      complex double l = evaluate_phrase (left);
+      complex double r = evaluate_phrase (right);
       switch(dyadic_op (dd)) {
       case SYM_PLUS:
 	rr = l + r;
@@ -924,7 +952,7 @@ evaluate_phrase (node_u node)
 	rr = l / r;
 	break;
       case SYM_CARET:
-	rr = pow (l, r);
+	rr = cpow (l, r);
 	break;
       default:
 	break;
@@ -1016,6 +1044,7 @@ main (int ac, char *av[])
 #if 0
   gchar **vars  = NULL;
 #endif
+  gchar *complex_flag = NULL;
   gchar **files = NULL;
   gboolean list_fonts = FALSE;
   GOptionEntry entries[] = {
@@ -1025,6 +1054,8 @@ main (int ac, char *av[])
 #endif
     { "source", 's', 0, G_OPTION_ARG_STRING_ARRAY,
       &files, "<file>  Source file.", NULL },
+    { "complex", 'c', 0, G_OPTION_ARG_STRING,
+      &complex_flag, "Complex display mode.", NULL },
     { "fonts", 'f', 0, G_OPTION_ARG_NONE,
       &list_fonts, "List available fonts.", NULL },
     { NULL }
@@ -1039,6 +1070,34 @@ main (int ac, char *av[])
   if (!g_option_context_parse (context, &ac, &av, &error)) {
     g_warning ("option parsing failed: %s\n", error->message);
     g_clear_error (&error);
+  }
+
+  if (complex_flag) {
+    switch (*complex_flag) {
+    case 'r':
+    case 'R':
+      complex_mode = COMPLEX_REAL;
+      break;
+    case 'i':
+    case 'I':
+      complex_mode = COMPLEX_IMAG;
+      break;
+    case 'm':
+    case 'M':
+      complex_mode = COMPLEX_MAGNITUDE;
+      break;
+    case 'p':
+    case 'P':
+      complex_mode = COMPLEX_PHASE;
+      break;
+    case 'j':
+    case 'J':
+      complex_mode = COMPLEX_PROJECTION;
+      break;
+    default:
+      // fixme error
+      break;
+    }
   }
 
   if (list_fonts) {

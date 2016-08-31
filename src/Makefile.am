@@ -5,6 +5,7 @@ vis_SOURCES = vis.c \
               vis-parse.y vis-lex.l \
               fcn-decls.h fcn-table.h \
               parse-utilities.c parse-utilities.h \
+              fake-complex.c fake-complex.h \
               magick.c magick.h
 DISTCLEANFILES = .deps/*.P
 
