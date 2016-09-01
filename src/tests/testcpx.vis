@@ -1,0 +1,11 @@
+set key bl
+
+set background purple
+
+set variable theta [0.0, 4.0 * pi]
+
+"curl real" {weight = "1" colour = "#00ff00"} real(exp(theta * I))
+"curl imag" {weight = "1" colour = "#ff0000"} imag(exp(theta * I))
+"curl abs"  {weight = "1" colour = "#0000ff"} abs(.5*exp(theta * I))
+"curl phase"  {weight = "1" colour = "#ffffff"} phase(exp(theta * I))
+
