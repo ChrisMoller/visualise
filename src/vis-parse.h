@@ -46,61 +46,63 @@ extern int yydebug;
    /* Put the tokens into the symbol table, so that GDB and other debuggers
       know about them.  */
    enum yytokentype {
-     SETMODE = 258,
-     SETCTRL = 259,
-     SETLABEL = 260,
-     SETVAR = 261,
-     SETBG = 262,
-     SETKEY = 263,
-     SETYRANGE = 264,
-     NUMBER = 265,
-     STRING = 266,
-     QSTRING = 267,
-     DYADIC_4 = 268,
-     DYADIC_3 = 269,
-     DYADIC_2 = 270,
-     MONADIC = 271,
-     FUNCTION = 272,
-     LEFT_PAREN = 273,
-     RIGHT_PAREN = 274,
-     LEFT_BRACKET = 275,
-     RIGHT_BRACKET = 276,
-     LEFT_BRACE = 277,
-     RIGHT_BRACE = 278,
-     COMMA = 279,
-     NEGATE = 280,
-     ASSIGN = 281,
-     ERROR = 282,
-     UMINUS = 283
+     SET = 258,
+     MODE = 259,
+     CONTROL = 260,
+     LABEL = 261,
+     VARIABLE = 262,
+     BACKGROUND = 263,
+     KEY = 264,
+     RANGE = 265,
+     NUMBER = 266,
+     STRING = 267,
+     QSTRING = 268,
+     DYADIC_4 = 269,
+     DYADIC_3 = 270,
+     DYADIC_2 = 271,
+     MONADIC = 272,
+     FUNCTION = 273,
+     LEFT_PAREN = 274,
+     RIGHT_PAREN = 275,
+     LEFT_BRACKET = 276,
+     RIGHT_BRACKET = 277,
+     LEFT_BRACE = 278,
+     RIGHT_BRACE = 279,
+     COMMA = 280,
+     NEGATE = 281,
+     ASSIGN = 282,
+     ERROR = 283,
+     UMINUS = 284
    };
 #endif
 /* Tokens.  */
-#define SETMODE 258
-#define SETCTRL 259
-#define SETLABEL 260
-#define SETVAR 261
-#define SETBG 262
-#define SETKEY 263
-#define SETYRANGE 264
-#define NUMBER 265
-#define STRING 266
-#define QSTRING 267
-#define DYADIC_4 268
-#define DYADIC_3 269
-#define DYADIC_2 270
-#define MONADIC 271
-#define FUNCTION 272
-#define LEFT_PAREN 273
-#define RIGHT_PAREN 274
-#define LEFT_BRACKET 275
-#define RIGHT_BRACKET 276
-#define LEFT_BRACE 277
-#define RIGHT_BRACE 278
-#define COMMA 279
-#define NEGATE 280
-#define ASSIGN 281
-#define ERROR 282
-#define UMINUS 283
+#define SET 258
+#define MODE 259
+#define CONTROL 260
+#define LABEL 261
+#define VARIABLE 262
+#define BACKGROUND 263
+#define KEY 264
+#define RANGE 265
+#define NUMBER 266
+#define STRING 267
+#define QSTRING 268
+#define DYADIC_4 269
+#define DYADIC_3 270
+#define DYADIC_2 271
+#define MONADIC 272
+#define FUNCTION 273
+#define LEFT_PAREN 274
+#define RIGHT_PAREN 275
+#define LEFT_BRACKET 276
+#define RIGHT_BRACKET 277
+#define LEFT_BRACE 278
+#define RIGHT_BRACE 279
+#define COMMA 280
+#define NEGATE 281
+#define ASSIGN 282
+#define ERROR 283
+#define UMINUS 284
 
 
 
@@ -119,7 +121,7 @@ typedef union YYSTYPE
 
 
 /* Line 2058 of yacc.c  */
-#line 123 "vis-parse.h"
+#line 125 "vis-parse.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

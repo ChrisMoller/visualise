@@ -81,13 +81,14 @@ QSTR        [^\"]*
 \\[\n]             /* ignore terminal backslash */
 
 
-setlabel        { return SETLABEL; }
-setvar          { return SETVAR; }
-setctrl         { return SETCTRL; }
-setbg           { return SETBG; }
-setkey          { return SETKEY; }
-setmode         { return SETMODE; }
-setyrange       { return SETYRANGE; }
+set        	{ return SET; }
+label        	{ return LABEL; }
+variable        { return VARIABLE; }
+control        	{ return CONTROL; }
+background      { return BACKGROUND; }
+key          	{ return KEY; }
+mode         	{ return MODE; }
+range       	{ return RANGE; }
 lgamma          { yylval.f = FCN_LGAMMA;   return FUNCTION; }
 phase           { yylval.f = FCN_ARG;      return FUNCTION; }
 log10           { yylval.f = FCN_LOG10;    return FUNCTION; }
