@@ -1037,6 +1037,55 @@ build_menu (GtkWidget *vbox)
   gtk_box_pack_start (GTK_BOX (vbox), GTK_WIDGET (menubar), FALSE, FALSE, 2);
 }
 
+static void
+run_script (const char *file)
+{
+  static char *line = NULL;
+  static size_t line_length = 0;
+
+  if (!file) {
+    if (line) free (line);
+    line = NULL;
+    line_length = 0;
+    return;
+  }
+  FILE *source = fopen (file, "r");
+  int run = 1;
+  if (source) {
+    while (run) {
+      size_t grc = getline (&line, &line_length, source);
+      if (grc != -1) {
+	set_string(line);
+	curve_s *curve = NULL;
+	int rc = yyparse (&curve);
+	if (curve) {
+	  if (rc) {
+	    /* error -- delete function */
+	  }
+	  else curves = g_list_append (curves, curve);
+	}
+	delete_buffer();
+      }
+      else run = 0;
+    }
+  }
+}
+
+static void
+run_expr (const char *expr)
+{
+  set_string (expr);
+  curve_s *curve = NULL;
+  int rc = yyparse (&curve);
+  if (curve) {
+    if (rc) {
+      /* error -- delete function */
+    }
+    else curves = g_list_append (curves, curve);
+  }
+  delete_buffer();
+}
+
 int
 main (int ac, char *av[])
 {
@@ -1046,22 +1095,25 @@ main (int ac, char *av[])
 #endif
   gchar *complex_flag = NULL;
   gchar **files = NULL;
+  gchar **exprs = NULL;
   gboolean list_fonts = FALSE;
   GOptionEntry entries[] = {
 #if 0
     { "setvar", 'v', 0, G_OPTION_ARG_STRING_ARRAY,
       &vars, "Set variable.", NULL },
 #endif
-    { "source", 's', 0, G_OPTION_ARG_STRING_ARRAY,
-      &files, "<file>  Source file.", NULL },
     { "complex", 'c', 0, G_OPTION_ARG_STRING,
       &complex_flag, "Complex display mode.", NULL },
+    { "source", 's', 0, G_OPTION_ARG_STRING_ARRAY,
+      &files, "<file>  Source file.", NULL },
+    { "expr", 'e', 0, G_OPTION_ARG_STRING_ARRAY,
+      &exprs, "<expr>  Expression.", NULL },
     { "fonts", 'f', 0, G_OPTION_ARG_NONE,
       &list_fonts, "List available fonts.", NULL },
     { NULL }
   };
 
-  GOptionContext *context = g_option_context_new ("");
+  GOptionContext *context = g_option_context_new ("string string string...");
   g_option_context_add_main_entries (context, entries, NULL);
   g_option_context_add_group (context, gtk_get_option_group (TRUE));
 
@@ -1116,44 +1168,17 @@ main (int ac, char *av[])
   yydebug = 0;
 
   for (int i = 1; i < ac; i++) {
-    set_string(av[i]);
-    curve_s *curve = NULL;
-    int rc = yyparse (&curve);
-    if (curve) {
-      if (rc) {
-	/* error -- delete function */
-      }
-      else curves = g_list_append (curves, curve);
-    }
-    delete_buffer();
+    if (g_file_test (av[i], G_FILE_TEST_IS_REGULAR)) run_script (av[i]);
+    else run_expr (av[i]);
+  }
+
+  if (exprs) {
+    for (int i = 0; exprs[i]; i++) run_expr (exprs[i]);
   }
 
   if (files) {
-    char *line = NULL;
-    size_t line_length = 0;
-    for (int i = 0; files[i]; i++) {
-      FILE *source = fopen (files[i], "r");
-      int run = 1;
-      if (source) {
-	while (run) {
-	  size_t grc = getline (&line, &line_length, source);
-	  if (grc != -1) {
-	    set_string(line);
-	    curve_s *curve = NULL;
-	    int rc = yyparse (&curve);
-	    if (curve) {
-	      if (rc) {
-		/* error -- delete function */
-	      }
-	      else curves = g_list_append (curves, curve);
-	    }
-	    delete_buffer();
-	  }
-	  else run = 0;
-	}
-      }
-    }
-    if (line) free (line);
+    for (int i = 0; files[i]; i++) run_script (files[i]);
+    run_script (NULL);	// frees line buffer
   }
 
   /***************** start gtk stuff ****************/

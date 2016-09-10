@@ -55,7 +55,7 @@ x
 "sin" {weight = "4.5" colour = "#00ff00"} sin(Phase + x)
 "tan" {color = orange} tan(x)
 "cos" {colour = "rgb(0, 0, 100%)"} Amplitude * cos(x)
-"one" {colour = "rgb(255, 255, 255)"} sin(x)^2 + cos(x)^2
+"one" {colour = "rgba(255, 255, 255, 128)"} sin(x)^2 + cos(x)^2
 
 # in addition to pi and e provided as constants, vis supports the following
 # functions:

@@ -17,7 +17,7 @@ test2.vis) and a longer description of the input file format.
 
 
 Usage:
-  vis [OPTION...] 
+  vis [OPTION...] string string string...
 
 Help Options:
   -h, --help               Show help options
@@ -25,6 +25,90 @@ Help Options:
   --help-gtk               Show GTK+ Options
 
 Application Options:
+  -c, --complex            Complex display mode.
   -s, --source             <file>  Source file.
+  -e, --expr               <expr>  Expression.
   -f, --fonts              List available fonts.
   --display=DISPLAY        X display to use
+
+
+The -c option specifies how complex values are to be interpreted for plotting.
+The following option arguments bay be supplied:
+
+  real	      -- extract the real component
+  imaginary   -- extract the imaginary component
+  magnitude   -- extract the magnitude
+  phase       -- extract the phase
+  j           -- render the plot as a 3D projection (not yet implemented)
+
+  All options may be in either or lower case, may be abbreviated their
+  initial letter, and in fact may consist of any string that starts with
+  that letter.
+
+The -s option explicitly identifies the following argument as the filename
+of a script to be executed.  The option may be used any number of times; if
+used more than once, the scripts will be executed in the order specified.
+
+The -e option explicitly identifies the following argument as a vis command
+or expression.  The option may be used any number of times; if used more than
+once, the commands will be executed in the order specified.
+
+Any command-line arguments that aren't options will first be checked to see
+if they're valid file names.  If they are, they'll be treated as if they're
+script files, opened, and executed.  Otherwise they'll be executed as
+commands.
+
+All of the above can be mixed in any order.  If such a mix is specified,
+non-option arguments will be examined first, followed by explicit command
+option arguments, followed by explicit script option arguments.
+
+
+COMMANDS
+
+The following are valid vis commands:
+
+    set label <options> location string
+
+    where <options> is optional an consists of a series of one of more
+    keyword/value pairs enclosed in curly braces ({....}).
+
+    The keyword/value pairs are of the form
+
+             keyword = value
+
+    where the spaces are optional and ignored.
+
+    The valid keywords are:
+
+      colour (or colour)    The value may be expressed as:
+      	     	 	      a common name such as "red",
+			      a six-digit hexadecimal representation
+			        such as "#ff0000" where the
+			        are interpreted as #rrggbb,
+			      a string of the form "rgb (r, g, b)"
+			        where each value r, g, or b is a
+				number in the range of 0 to 255,
+				or is expressed as a percentage
+				(e.g., "55%") in the range of
+				0 to 100.  The string must be
+				quoted only if its not of the
+				form [[:alpha:]][[:alnum:]_]*
+			      a string of the form "rgba (r, g, b)"
+			        like the above but including an
+				alpha value.
+
+      angle		     Degrees counter clockwise from the
+      			       at witch the string will be rendered.
+			       The value must be quoted.
+
+      stretch		     Additional pixel spacing to be inserted
+      			       between rendered characters.  The value
+			       must be quoted.
+
+      font		     A string of very flexible form, typically
+      			       such as "Sans Bold 12" or "Serif 16".
+			       Must be quoted.
+
+				
+
+				
