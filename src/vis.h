@@ -119,7 +119,8 @@ typedef struct {
 
 typedef enum {
   VBL_INDEPENDENT,
-  VBL_CONTROL
+  VBL_CONTROL,
+  VBL_MACRO
 } vbl_type_e;
 
 typedef struct {
@@ -128,6 +129,7 @@ typedef struct {
   double     min;
   double     max;
   vbl_type_e type;
+  node_u     macro;
   GtkAdjustment *adj;
 } vbl_s;
 #define vbl_name(v)  (v)->name
@@ -135,6 +137,7 @@ typedef struct {
 #define vbl_min(v)   (v)->min
 #define vbl_max(v)   (v)->max
 #define vbl_type(v)  (v)->type
+#define vbl_macro(v) (v)->macro
 #define vbl_adj(v)   (v)->adj
 
 struct _label_s {

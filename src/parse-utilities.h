@@ -11,6 +11,7 @@ void     create_vbl (char *name, node_u value, node_u min, node_u max);
 void     create_label (param_s *options, node_u x, node_u y, char *str);
 curve_s *create_curve (char *name, param_s *options, node_u expression);
 void     create_range (node_u min, node_u max);
+void	 create_subrn_node (char *str, node_u node);
 void     set_bg (char *colour);
 void     set_mode (char *mode);
 void	 set_key_alpha (char *loc);

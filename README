@@ -69,7 +69,7 @@ The following are valid vis commands:
 
     set label <options> location string
 
-    where <options> is optional an consists of a series of one of more
+    where <options> is optional and consists of a series of one of more
     keyword/value pairs enclosed in curly braces ({....}).
 
     The keyword/value pairs are of the form
@@ -107,7 +107,21 @@ The following are valid vis commands:
 
       font		     A string of very flexible form, typically
       			       such as "Sans Bold 12" or "Serif 16".
-			       Must be quoted.
+			       Running vis with the -f option will
+			       produce a list of available fonts.  Using
+			       as an example:
+
+	       "DejaVu Sans,DejaVu Sans Condensed"      "Condensed Bold,Bold"
+
+	       	       	       A valid string may be formed by selecting
+			       one element of the family list, "DejaVu Sans",
+			       an element from the style list, "Bold", and
+			       a size to create, for example.
+			           "DejaVu Sans Bold 12"
+	                       Must be quoted.
+
+
+    The location parameter is specified as a point of 
 
 				
 

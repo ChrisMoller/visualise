@@ -1,0 +1,11 @@
+set key bl
+
+set background green
+
+set variable x [-2*pi, 2*pi]
+
+macro = sin(x)
+
+#set range [-2, 15]
+
+"macro" {colour = black} macro

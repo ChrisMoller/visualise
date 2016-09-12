@@ -67,6 +67,8 @@
 
 stmt	:	/* null */
 	| stmt SET parameters
+	| STRING ASSIGN phrase
+	        { create_vbl ($1, $3, NULL, NULL); }
 	| stmt optname options phrase
             { if (curve) *curve = create_curve ($2, $3, $4); }
 	;

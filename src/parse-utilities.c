@@ -184,21 +184,27 @@ create_vbl (char *name, node_u value, node_u min, node_u max)
     svbls = g_list_append (svbls, vv);
   }
   vbl_name (vv)  = name;
-  vbl_value (vv) = evaluate_phrase (value);
-  vbl_min (vv)   = evaluate_phrase (min);
-  vbl_max (vv)   = evaluate_phrase (max);
-  if (vbl_min (vv) > vbl_max (vv)) {
-    double t = vbl_min (vv);
-    vbl_min (vv) = vbl_max (vv);
-    vbl_max (vv) = t;
-  }
-  vbl_adj (vv)   = NULL;
+  if (min && max) {		// control or independent vbl
+    vbl_value (vv) = evaluate_phrase (value);
+    vbl_min (vv)   = evaluate_phrase (min);
+    vbl_max (vv)   = evaluate_phrase (max);
+    if (vbl_min (vv) > vbl_max (vv)) {
+      double t = vbl_min (vv);
+      vbl_min (vv) = vbl_max (vv);
+      vbl_max (vv) = t;
+    }
+    vbl_adj (vv)   = NULL;
 
-  if (isnan (vbl_value (vv))) {
-    ivar = vv;
-    vbl_type (vv) = VBL_INDEPENDENT;
+    if (isnan (vbl_value (vv))) {
+      ivar = vv;
+      vbl_type (vv) = VBL_INDEPENDENT;
+    }
+    else vbl_type (vv) = VBL_CONTROL;
   }
-  else vbl_type (vv) = VBL_CONTROL;
+  else {			// macro
+    vbl_macro (vv) = value;
+    vbl_type (vv) = VBL_MACRO;
+  }
 }
 
 curve_s *

@@ -846,7 +846,7 @@ show_node (int indent, node_u node)
     }
     break;
   case TYPE_STRING:
-    {
+    {				// fixme handle macro
       vbl_s *vv = NULL;
       string_s *ss = node_string (node);
       printf ("%*sstring node, value = \"%s\"\n",
@@ -910,7 +910,10 @@ evaluate_phrase (node_u node)
       string_s *ss = node_string (node);
       if (ss) {
 	vv = lookup_vbl (string_str (ss));
-	if (vv) rr = vbl_value (vv);
+	if (vv) {
+	  rr = (vbl_type (vv) == VBL_MACRO) ?
+	    evaluate_phrase (vbl_macro (vv)) : vbl_value (vv);
+	}
       }
     }
     break;
