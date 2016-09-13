@@ -230,6 +230,29 @@ axis_range (double min, double max,
   if (expce_p) *expce_p = intce;
 }
 
+void
+do_filter (curve_s *curve, int nr_points, double xi) {
+  if (curve_intdiff (curve) > 0) {
+    double *accum = malloc (nr_points * sizeof(double));
+    accum[0] = 0.0;
+    for (int i = 1; i < nr_points; i++) {
+      accum[i] =  accum[i - 1] + xi * curve_points (curve)[i];
+    }
+    free (curve_points (curve));
+    curve_points (curve) = accum;
+  }
+  else if (curve_intdiff (curve) < 0) {
+    double *accum = malloc (nr_points * sizeof(double));
+    accum[0] = 0.0;
+    for (int i = 1; i < nr_points; i++) {
+      accum[i] =
+	(curve_points (curve)[i] - curve_points (curve)[i - 1]) / xi;
+    }
+    free (curve_points (curve));
+    curve_points (curve) = accum;
+  }
+}
+
 static void
 da_draw (cairo_t *cr, gdouble width, gdouble height)
 {
@@ -267,6 +290,7 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
     if (curve && ivar) {
       min_x =  vbl_min (ivar);
       max_x =  vbl_max (ivar);
+      printf ("min = %g, max = %g\n", min_x, max_x);
       double xi = (max_x - min_x) / width;
       if (curve_points (curve)) free (curve_points (curve));
       curve_points (curve) =
@@ -280,27 +304,9 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
 	  double r = project_complex (cx);
 	  curve_points (curve)[i] = r;
 	}
+	printf ("last x = %g\n", x);
 	int nr_points = i;
-	if (curve_intdiff (curve) > 0) {
-	  printf ("int\n");
-	  double *accum = malloc (nr_points * sizeof(double));
-	  accum[0] = 0.0;
-	  for (i = 1; i < nr_points; i++) {
-	    accum[i] =  accum[i - 1] + xi * curve_points (curve)[i];
-	  }
-	  free (curve_points (curve));
-	  curve_points (curve) = accum;
-	}
-	else if (curve_intdiff (curve) < 0) {
-	  double *accum = malloc (nr_points * sizeof(double));
-	  accum[0] = 0.0;
-	  for (i = 1; i < nr_points; i++) {
-	    accum[i] =
-	      (curve_points (curve)[i] - curve_points (curve)[i - 1]) / xi;
-	  }
-	  free (curve_points (curve));
-	  curve_points (curve) = accum;
-	}
+	do_filter (curve, nr_points, xi);
 	for (i = 0; i < nr_points; i++) {
 	  double r = curve_points (curve)[i];
 	  if (min_y > r && r >= range_min (range)) min_y = r;
@@ -445,8 +451,13 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
 	   theta += xi, i++) {
 	vbl_value (ivar) = theta;
 	complex double cx = evaluate_phrase (curve_expression (curve));
-	curve_points (curve)[i] = cx;
 	double r = project_complex (cx);
+	curve_points (curve)[i] = r;
+      }
+      nr_points = i;
+      do_filter (curve, nr_points, xi);
+      for (i =  0; i < nr_points; i++) {
+	double r = curve_points (curve)[i];
 	double dx = r * cos (theta);
 	double dy = r * sin (theta);
 	if (min_x > dx) min_x = dx;
@@ -556,7 +567,9 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
     switch(plot_mode) {
     case MODE_CARTESIAN:
       g_list_foreach (curves, scale_curve_cartesian, NULL);
-      scale_x = width  / (max_x - min_y);
+      g_print ("max = %g min = %g\n", max_x, min_x);
+      scale_x = width  / (max_x - min_x);
+      printf ("sca = %g wid = %g\n", scale_x, width);
       scale_y = height / (max_y - min_y);
       draw_axes_cartesian ();
       break;
