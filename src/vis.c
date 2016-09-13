@@ -268,11 +268,41 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
       min_x =  vbl_min (ivar);
       max_x =  vbl_max (ivar);
       double xi = (max_x - min_x) / width;
+      if (curve_points (curve)) free (curve_points (curve));
+      curve_points (curve) =
+	malloc ((4 + (int)width) * sizeof(double));
       if (xi > 0.0) {
-	for (double x = min_x; x <= max_x; x += xi) {
+	int i;
+	double x;
+	for (i = 0, x = min_x; x <= max_x; x += xi, i++) {
 	  vbl_value (ivar) = x;
 	  complex double cx = evaluate_phrase (curve_expression (curve));
 	  double r = project_complex (cx);
+	  curve_points (curve)[i] = r;
+	}
+	int nr_points = i;
+	if (curve_intdiff (curve) > 0) {
+	  printf ("int\n");
+	  double *accum = malloc (nr_points * sizeof(double));
+	  accum[0] = 0.0;
+	  for (i = 1; i < nr_points; i++) {
+	    accum[i] =  accum[i - 1] + xi * curve_points (curve)[i];
+	  }
+	  free (curve_points (curve));
+	  curve_points (curve) = accum;
+	}
+	else if (curve_intdiff (curve) < 0) {
+	  double *accum = malloc (nr_points * sizeof(double));
+	  accum[0] = 0.0;
+	  for (i = 1; i < nr_points; i++) {
+	    accum[i] =
+	      (curve_points (curve)[i] - curve_points (curve)[i - 1]) / xi;
+	  }
+	  free (curve_points (curve));
+	  curve_points (curve) = accum;
+	}
+	for (i = 0; i < nr_points; i++) {
+	  double r = curve_points (curve)[i];
 	  if (min_y > r && r >= range_min (range)) min_y = r;
 	  if (max_y < r && r <= range_max (range)) max_y = r;
 	}
@@ -291,10 +321,12 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
       cairo_set_source_rgba (cr, red, green, blue, alpha);
       cairo_set_line_width (cr, curve_weight (curve));
       double xi = (max_x - min_x) / width;
-      if (xi > 0.0) {
-	for (double x = min_x; x <= max_x; x += granularity * xi) {
+      int i;
+      double x;
+      if (xi > 0.0 && curve_points (curve)) {
+	for (i = 0, x = min_x; x <= max_x; x += granularity * xi, i++) {
 	  vbl_value (ivar) = x;
-	  complex double cx = evaluate_phrase (curve_expression (curve));
+	  complex double cx = curve_points (curve)[i];
 	  double r = project_complex (cx);
 	  double xp = xformx (x);
 	  double yp = xformy (r);
@@ -302,6 +334,8 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
 	  else            cairo_line_to (cr, xp, yp);
 	}
 	cairo_stroke (cr);
+	free (curve_points (curve));
+	curve_points (curve) = NULL;
       }
 
       if (key_x >= 0.0 && key_y >= 0.0) 
@@ -401,10 +435,17 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
     curve_s *curve = data;
     if (curve && ivar) {
       double xi = granularity * G_PI / 180.0;
-      for (double theta = vbl_min (ivar); theta <= vbl_max (ivar);
-	   theta += xi) {
+      if (curve_points (curve)) free (curve_points (curve));
+      int nr_points = (int)((vbl_max (ivar) - vbl_min (ivar)) / xi);
+      curve_points (curve) =
+	malloc ((4 + nr_points) * sizeof(double));
+      double theta;
+      int i;
+      for (i = 0, theta = vbl_min (ivar); theta <= vbl_max (ivar);
+	   theta += xi, i++) {
 	vbl_value (ivar) = theta;
 	complex double cx = evaluate_phrase (curve_expression (curve));
+	curve_points (curve)[i] = cx;
 	double r = project_complex (cx);
 	double dx = r * cos (theta);
 	double dy = r * sin (theta);
@@ -428,10 +469,12 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
       cairo_set_line_width (cr, curve_weight (curve));
       double xi = granularity * G_PI / 180.0;
 
-      for (double theta = vbl_min (ivar); theta <= vbl_max (ivar);
-	   theta += xi) {
+      double theta;
+      int i;
+      for (i = 0, theta = vbl_min (ivar); theta <= vbl_max (ivar);
+	   theta += xi, i++) {
 	vbl_value (ivar) = theta;
-	complex double cx = evaluate_phrase (curve_expression (curve));
+	complex double cx = curve_points (curve)[i];
 	double r = project_complex (cx);
 	double dx = r * cos (theta);
 	double dy = r * sin (theta);
@@ -442,6 +485,8 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
       }
       
       cairo_stroke (cr);
+      free (curve_points (curve));
+      curve_points (curve) = NULL;
 
       if (key_x >= 0.0 && key_y >= 0.0) 
 	key_offset = draw_key (cr, key_x, key_offset, width, curve);
@@ -491,7 +536,6 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
 	cairo_move_to (cr, pxformx (dd), pxformy (0.0) - 10.0);
 	double rdx = nearbyint (10.0 * dd) / 10.0;
 	gchar *str = g_strdup_printf ("%0.2g", rdx);
-	g_print ("%g\n", rdx);
 	cairo_show_text (cr, str);
 	g_free (str);
       }

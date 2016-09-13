@@ -86,6 +86,8 @@ label        	{ return LABEL; }
 variable        { return VARIABLE; }
 control        	{ return CONTROL; }
 background      { return BACKGROUND; }
+integrate       { return INTEGRATE; }
+differentiate   { return DIFFERENTIATE; }
 key          	{ return KEY; }
 mode         	{ return MODE; }
 range       	{ return RANGE; }

@@ -23,6 +23,7 @@
   node_u   n;
   char    *s;
   param_s *p;
+  int      i;
 };
 
 %token	    SET
@@ -55,7 +56,10 @@
 %type	<s> anystring
 %type	<p> options
 %type	<p> param
+%type	<i> optid
 %token      ERROR
+%token      INTEGRATE
+%token      DIFFERENTIATE
 %right      UMINUS
 
 %parse-param {curve_s **curve}
@@ -69,8 +73,13 @@ stmt	:	/* null */
 	| stmt SET parameters
 	| STRING ASSIGN phrase
 	        { create_vbl ($1, $3, NULL, NULL); }
-	| stmt optname options phrase
-            { if (curve) *curve = create_curve ($2, $3, $4); }
+	| stmt optname options optid phrase
+	        { if (curve) *curve = create_curve ($2, $3, $4, $5); }
+	;
+
+optid   : /* empty */         { $$ = 0; }
+	| optid INTEGRATE     { $$ = $1 + 1; }
+	| optid DIFFERENTIATE { $$ = $1 - 1; }
 	;
 
 parameters: LABEL options

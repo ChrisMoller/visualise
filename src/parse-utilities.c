@@ -208,7 +208,7 @@ create_vbl (char *name, node_u value, node_u min, node_u max)
 }
 
 curve_s *
-create_curve (char *name, param_s *options, node_u expression)
+create_curve (char *name, param_s *options, int intdiff, node_u expression)
 {
   curve_s *curve = malloc (sizeof(curve_s));
   curve_expression (curve) = expression;
@@ -217,6 +217,8 @@ create_curve (char *name, param_s *options, node_u expression)
   curve_max (curve)	 = NAN;
   curve_rgba (curve)	 = NULL;
   curve_weight (curve)	 = 1.0;
+  curve_points (curve)	 = NULL;
+  curve_intdiff (curve)	 = intdiff;
   if (options) {
     if (!parse_curve_hash) {
       parse_curve_hash = g_hash_table_new (g_str_hash, g_str_equal);

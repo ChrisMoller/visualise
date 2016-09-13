@@ -72,7 +72,9 @@ extern int yydebug;
      NEGATE = 281,
      ASSIGN = 282,
      ERROR = 283,
-     UMINUS = 284
+     INTEGRATE = 284,
+     DIFFERENTIATE = 285,
+     UMINUS = 286
    };
 #endif
 /* Tokens.  */
@@ -102,7 +104,9 @@ extern int yydebug;
 #define NEGATE 281
 #define ASSIGN 282
 #define ERROR 283
-#define UMINUS 284
+#define INTEGRATE 284
+#define DIFFERENTIATE 285
+#define UMINUS 286
 
 
 
@@ -118,10 +122,11 @@ typedef union YYSTYPE
   node_u   n;
   char    *s;
   param_s *p;
+  int      i;
 
 
 /* Line 2058 of yacc.c  */
-#line 125 "vis-parse.h"
+#line 130 "vis-parse.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

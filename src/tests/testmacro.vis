@@ -8,4 +8,6 @@ macro = sin(x)
 
 #set range [-2, 15]
 
-"macro" {colour = black} macro
+"sin"   {colour = black} macro
+"diff"  {colour = red}   differentiate macro
+"int"   {colour = blue}  integrate macro

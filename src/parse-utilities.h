@@ -9,7 +9,8 @@ node_u   create_dyadic_node (node_u l, op_e op, node_u r);
 node_u   create_function_node (fcn_e fcn, node_u node);
 void     create_vbl (char *name, node_u value, node_u min, node_u max);
 void     create_label (param_s *options, node_u x, node_u y, char *str);
-curve_s *create_curve (char *name, param_s *options, node_u expression);
+curve_s *create_curve (char *name, param_s *options,
+		       int intdiff, node_u expression);
 void     create_range (node_u min, node_u max);
 void	 create_subrn_node (char *str, node_u node);
 void     set_bg (char *colour);

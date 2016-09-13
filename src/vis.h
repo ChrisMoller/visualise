@@ -39,6 +39,8 @@ typedef struct {
   double   max;
   GdkRGBA *rgba;
   double   weight;
+  double  *points;
+  int	   intdiff;
 } curve_s;
 #define curve_expression(c)	((c)->expression)
 #define curve_name(c)		((c)->name)
@@ -46,6 +48,8 @@ typedef struct {
 #define curve_max(c)		((c)->max)
 #define curve_rgba(c)		((c)->rgba)
 #define curve_weight(c)		((c)->weight)
+#define curve_points(c)		((c)->points)
+#define curve_intdiff(c)	((c)->intdiff)
 
 typedef enum {
   SYM_PLUS,
