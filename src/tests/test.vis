@@ -6,7 +6,8 @@
 # or a coordinate in the form of [x, y], where x and y are percentages of the
 # drawing area width and height respectively.
 
-set key bl
+set key \
+   bl
 
 
 # colours may be specified either by name, quoted or unquoted, or in any
@@ -24,8 +25,6 @@ set background purple
 
 set variable x [-7.0, 2.2]
 
-macro = exp(10 * x)
-
 # the variables set by setctrl can be used in the functions to be visualised.
 # separate controls will be provided for each variable, allowing to be set
 # across the given [min, max] range, the initial value being set by the
@@ -33,6 +32,7 @@ macro = exp(10 * x)
 
 set control Amplitude 1.0 [-2, 2]
 set control Phase 0.0 [-2, 2]
+set control lblloc 0.0 [0.0, 100.0]
 
 
 # ylimits clamps the displayed y range to the given range.  if omitted, the
@@ -41,7 +41,10 @@ set control Phase 0.0 [-2, 2]
 set range [-4, 4]
 
 
-set label {font = "Nimbus Mono L  Bold Oblique 16" stretch = "10"} [10, 10] "label"
+set label \
+  {font = "Nimbus Mono L  Bold Oblique 16" stretch = "10" \
+   locx = "relative" locy = "relative" } \
+  [lblloc, 10] "label"
 #set label {font = "DroidSans Bold Italic 14" stretch = "10"} [10, 10] "label"
 set label {angle = "45"} [20, 20] "another label"
 
@@ -57,8 +60,6 @@ x
 "tan" {color = orange} tan(x)
 "cos" {colour = "rgb(0, 0, 100%)"} Amplitude * cos(x)
 "one" {colour = "rgba(255, 255, 255, 128)"} sin(x)^2 + cos(x)^2
-
-"macro" {colour = black} macro
 
 # in addition to pi and e provided as constants, vis supports the following
 # functions:

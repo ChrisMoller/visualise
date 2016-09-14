@@ -102,6 +102,43 @@ parse_label_font (label_s *label, char *str)
   label_font (label) = pango_font_description_from_string (str);
 }
 
+static label_loc_e
+parse_label_loc (const char *str)
+{
+  label_loc_e rc = LOCATION_SCREEN_RELATIVE;
+  if (str) {
+    switch (*str) {
+    case 'u':
+    case 'U':
+      rc = LOCATION_USER;
+      break;
+    case 'a':
+    case 'A':
+      rc = LOCATION_SCREEN_ABSOLUTE;
+      break;
+    }
+  }
+  return rc;
+}
+
+static void
+parse_label_location (label_s *label, char *str)
+{
+  label_loc_x (label) = label_loc_y (label) = parse_label_loc (str);
+}
+
+static void
+parse_label_locationx (label_s *label, char *str)
+{
+  label_loc_x (label) = parse_label_loc (str);
+}
+
+static void
+parse_label_locationy (label_s *label, char *str)
+{
+  label_loc_y (label) = parse_label_loc (str);
+}
+
 typedef struct {
   char *key;
   parse_label_fcn fcn;
@@ -115,6 +152,12 @@ parse_label_ops_s parse_label_ops[] = {
   {"angle",	parse_label_angle},
   {"stretch",	parse_label_stretch},
   {"font",	parse_label_font},
+  {"location",	parse_label_location},
+  {"loc",	parse_label_location},
+  {"locationx",	parse_label_locationx},
+  {"locx",	parse_label_locationx},
+  {"locationy",	parse_label_locationy},
+  {"locy",	parse_label_locationy},
 };
 
 static GHashTable *parse_label_hash = NULL;
@@ -346,8 +389,15 @@ void
 create_label (param_s *options, node_u x, node_u y, char *str)
 {
   label_s *label = malloc (sizeof(label_s));
+#if 1
+  label_x (label) = x;
+  label_y (label) = y;
+  label_loc_x (label) = LOCATION_SCREEN_RELATIVE;
+  label_loc_y (label) = LOCATION_SCREEN_RELATIVE;
+#else
   label_x (label) = evaluate_phrase (x) / 100.0;
   label_y (label) = evaluate_phrase (y) / 100.0;
+#endif
   label_angle (label) = 0.0;
   label_stretch (label) = 0;
   label_font (label) = NULL;

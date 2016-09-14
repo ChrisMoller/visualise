@@ -144,9 +144,17 @@ typedef struct {
 #define vbl_macro(v) (v)->macro
 #define vbl_adj(v)   (v)->adj
 
+typedef enum {
+  LOCATION_USER,			// user coord
+  LOCATION_SCREEN_ABSOLUTE,		// absolute location
+  LOCATION_SCREEN_RELATIVE		// percent of width
+} label_loc_e;
+
 struct _label_s {
-  double   x;
-  double   y;
+  node_u   x;
+  node_u   y;
+  label_loc_e locx;
+  label_loc_e locy;
   double   angle;
   int      stretch;
   PangoFontDescription *font;
@@ -156,6 +164,8 @@ struct _label_s {
 };
 #define label_x(l)	 ((l)->x)
 #define label_y(l)	 ((l)->y)
+#define label_loc_x(l)	 ((l)->locx)
+#define label_loc_y(l)	 ((l)->locy)
 #define label_angle(l)	 ((l)->angle)
 #define label_stretch(l) ((l)->stretch)
 #define label_font(l)	 ((l)->font)

@@ -149,7 +149,9 @@ draw_key (cairo_t *cr, double key_x, double key_offset,
 }
 
 static void
-draw_label (cairo_t *cr, double width, double height, label_s *label)
+draw_label (cairo_t *cr, double width, double height, label_s *label,
+	    double min_x, double max_x, double min_y, double max_y,
+	    double scale_x, double scale_y)
 {
   if (!label) return;
 
@@ -175,7 +177,40 @@ draw_label (cairo_t *cr, double width, double height, label_s *label)
 			 label_rgba (label)->blue,
 			 label_rgba (label)->alpha);
 
+#define lxformx(xx) (((xx) - min_x) * scale_x)
+#define lxformy(yy) (height - ((yy) - min_y) * scale_y)
+#if 1
+  double xp = creal (evaluate_phrase (label_x (label)));
+  double yp = creal (evaluate_phrase (label_y (label)));
+  
+  switch (label_loc_x (label)) {
+  case  LOCATION_USER:
+    xp = lxformx (xp);
+    break;
+  case  LOCATION_SCREEN_RELATIVE:
+    xp *= (width / 100.0);
+    break;
+  case  LOCATION_SCREEN_ABSOLUTE:
+    /* do nothing */
+    break;
+  }
+  
+  switch (label_loc_y (label)) {
+  case  LOCATION_USER:
+    yp = lxformy (yp);
+    break;
+  case  LOCATION_SCREEN_RELATIVE:
+    yp *= (height / 100.0);
+    break;
+  case  LOCATION_SCREEN_ABSOLUTE:
+    /* do nothing */
+    break;
+  }
+  
+  cairo_move_to (cr, xp, yp);
+#else
   cairo_move_to (cr, label_x (label) * width, label_y (label) * height);
+#endif
 
   cairo_rotate (cr, -label_angle (label));
 
@@ -290,7 +325,6 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
     if (curve && ivar) {
       min_x =  vbl_min (ivar);
       max_x =  vbl_max (ivar);
-      printf ("min = %g, max = %g\n", min_x, max_x);
       double xi = (max_x - min_x) / width;
       if (curve_points (curve)) free (curve_points (curve));
       curve_points (curve) =
@@ -304,7 +338,6 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
 	  double r = project_complex (cx);
 	  curve_points (curve)[i] = r;
 	}
-	printf ("last x = %g\n", x);
 	int nr_points = i;
 	do_filter (curve, nr_points, xi);
 	for (i = 0; i < nr_points; i++) {
@@ -567,9 +600,7 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
     switch(plot_mode) {
     case MODE_CARTESIAN:
       g_list_foreach (curves, scale_curve_cartesian, NULL);
-      g_print ("max = %g min = %g\n", max_x, min_x);
       scale_x = width  / (max_x - min_x);
-      printf ("sca = %g wid = %g\n", scale_x, width);
       scale_y = height / (max_y - min_y);
       draw_axes_cartesian ();
       break;
@@ -592,7 +623,8 @@ da_draw (cairo_t *cr, gdouble width, gdouble height)
     
     if (labels) {
       for (label_s *lbl = labels; lbl; lbl = label_next (lbl))
-	draw_label (cr, width, height, lbl);
+	draw_label (cr, width, height, lbl, min_x, max_x, min_y, max_y,
+		    scale_x, scale_y);
     }
 
     /*********** key setup *********/
@@ -1097,24 +1129,61 @@ build_menu (GtkWidget *vbox)
   gtk_box_pack_start (GTK_BOX (vbox), GTK_WIDGET (menubar), FALSE, FALSE, 2);
 }
 
+static size_t
+getline_continued (char **line, FILE *source)
+{
+  static char  *local_line = NULL;
+  static size_t local_line_length = 0;
+  size_t grc = -1;
+  char  *accumulated_line = NULL;
+  size_t accumulated_line_length = 0;
+  int run = 0;
+
+  if (!source) {
+    if (local_line) free (local_line);
+    local_line = NULL;
+    local_line_length = 0;
+    return 0;
+  }
+
+  do {
+    run = 0;
+    grc = getline (&local_line, &local_line_length, source);
+    if (grc != -1) {
+      if (grc > 1 && local_line[grc - 2] == '\\') {
+	grc -= 2;
+	run =  1;
+      }
+      if (grc > 0) {
+	accumulated_line =
+	  realloc (accumulated_line, accumulated_line_length + grc + 2);
+	memcpy (accumulated_line + accumulated_line_length,
+		local_line, grc);	
+	accumulated_line_length += grc;
+      }
+    }
+    else run =  0;
+  } while (run);
+  if (accumulated_line_length > 0) {
+    accumulated_line[accumulated_line_length++] = '\n';
+	accumulated_line[accumulated_line_length] = 0;
+    if (line) *line = accumulated_line;
+  }
+
+  return accumulated_line_length;
+}
+
 static void
 run_script (const char *file)
 {
   static char *line = NULL;
-  static size_t line_length = 0;
 
-  if (!file) {
-    if (line) free (line);
-    line = NULL;
-    line_length = 0;
-    return;
-  }
   FILE *source = fopen (file, "r");
   int run = 1;
   if (source) {
     while (run) {
-      size_t grc = getline (&line, &line_length, source);
-      if (grc != -1) {
+      size_t grc = getline_continued (&line, source);
+      if (grc > 0 && line) {
 	set_string(line);
 	curve_s *curve = NULL;
 	int rc = yyparse (&curve);
@@ -1125,9 +1194,11 @@ run_script (const char *file)
 	  else curves = g_list_append (curves, curve);
 	}
 	delete_buffer();
+	free (line);
       }
       else run = 0;
     }
+    getline_continued (NULL, NULL);	// free stuff up
   }
 }
 
@@ -1238,7 +1309,9 @@ main (int ac, char *av[])
 
   if (files) {
     for (int i = 0; files[i]; i++) run_script (files[i]);
+#if 0
     run_script (NULL);	// frees line buffer
+#endif
   }
 
   /***************** start gtk stuff ****************/
