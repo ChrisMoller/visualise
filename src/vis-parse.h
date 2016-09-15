@@ -68,13 +68,15 @@ extern int yydebug;
      RIGHT_BRACKET = 277,
      LEFT_BRACE = 278,
      RIGHT_BRACE = 279,
-     COMMA = 280,
-     NEGATE = 281,
-     ASSIGN = 282,
-     ERROR = 283,
-     INTEGRATE = 284,
-     DIFFERENTIATE = 285,
-     UMINUS = 286
+     LEFT_ANGLE = 280,
+     RIGHT_ANGLE = 281,
+     COMMA = 282,
+     NEGATE = 283,
+     ASSIGN = 284,
+     ERROR = 285,
+     INTEGRATE = 286,
+     DIFFERENTIATE = 287,
+     UMINUS = 288
    };
 #endif
 /* Tokens.  */
@@ -100,13 +102,15 @@ extern int yydebug;
 #define RIGHT_BRACKET 277
 #define LEFT_BRACE 278
 #define RIGHT_BRACE 279
-#define COMMA 280
-#define NEGATE 281
-#define ASSIGN 282
-#define ERROR 283
-#define INTEGRATE 284
-#define DIFFERENTIATE 285
-#define UMINUS 286
+#define LEFT_ANGLE 280
+#define RIGHT_ANGLE 281
+#define COMMA 282
+#define NEGATE 283
+#define ASSIGN 284
+#define ERROR 285
+#define INTEGRATE 286
+#define DIFFERENTIATE 287
+#define UMINUS 288
 
 
 
@@ -126,7 +130,7 @@ typedef union YYSTYPE
 
 
 /* Line 2058 of yacc.c  */
-#line 130 "vis-parse.h"
+#line 134 "vis-parse.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

@@ -76,6 +76,8 @@ QSTR        [^\"]*
 \]		return RIGHT_BRACKET;
 \{		return LEFT_BRACE;
 \}		return RIGHT_BRACE;
+\<		return LEFT_ANGLE;
+\>		return RIGHT_ANGLE;
 \,		return COMMA;
 \=              return ASSIGN;
 \\[\n]             /* ignore terminal backslash */

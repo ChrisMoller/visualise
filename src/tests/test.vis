@@ -46,7 +46,7 @@ set label \
    locx = "relative" locy = "relative" } \
   [lblloc, 10] "label"
 #set label {font = "DroidSans Bold Italic 14" stretch = "10"} [10, 10] "label"
-set label {angle = "45"} [20, 20] "another label"
+set label <lblloc/10.0> [20, 20] "another label"
 
 # functions can be specified with an optional quoted name (used in the key),
 # optional options, and the function itself.  functions are expressed as

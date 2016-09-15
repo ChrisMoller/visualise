@@ -155,7 +155,11 @@ struct _label_s {
   node_u   y;
   label_loc_e locx;
   label_loc_e locy;
+#ifdef USE_ANGLE_PARAM
   double   angle;
+#else
+  node_u   angle;
+#endif
   int      stretch;
   PangoFontDescription *font;
   GdkRGBA *rgba;

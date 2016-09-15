@@ -212,7 +212,13 @@ draw_label (cairo_t *cr, double width, double height, label_s *label,
   cairo_move_to (cr, label_x (label) * width, label_y (label) * height);
 #endif
 
+#ifdef USE_ANGLE_PARAM
   cairo_rotate (cr, -label_angle (label));
+#else
+  double angle = label_angle (label) ?
+    -creal (evaluate_phrase (label_angle (label))) : 0.0;
+  cairo_rotate (cr, angle);
+#endif
 
   PangoAttribute *spacing =
     pango_attr_letter_spacing_new (label_stretch (label) * PANGO_SCALE);

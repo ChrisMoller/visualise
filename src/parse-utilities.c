@@ -61,11 +61,13 @@ parse_label_stretch (label_s *label, char *str)
   label_stretch (label) = atoi (str);
 }
 
+#ifdef USE_ANGLE_PARAM
 static void
 parse_label_angle (label_s *label, char *str)
 {
   label_angle (label) = strtod (str, NULL) / 180.0 * M_PI;
 }
+#endif
 
 static void
 parse_label_colour (label_s *label, char *str)
@@ -149,7 +151,9 @@ typedef struct {
 parse_label_ops_s parse_label_ops[] = {
   {"color",	parse_label_colour},
   {"colour",	parse_label_colour},
+#ifdef USE_ANGLE_PARAM
   {"angle",	parse_label_angle},
+#endif
   {"stretch",	parse_label_stretch},
   {"font",	parse_label_font},
   {"location",	parse_label_location},
@@ -386,7 +390,7 @@ set_mode (char *mode)
 }
 
 void
-create_label (param_s *options, node_u x, node_u y, char *str)
+create_label (param_s *options, node_u angle, node_u x, node_u y, char *str)
 {
   label_s *label = malloc (sizeof(label_s));
 #if 1
@@ -398,7 +402,11 @@ create_label (param_s *options, node_u x, node_u y, char *str)
   label_x (label) = evaluate_phrase (x) / 100.0;
   label_y (label) = evaluate_phrase (y) / 100.0;
 #endif
+#ifdef USE_ANGLE_PARAM
   label_angle (label) = 0.0;
+#else
+  label_angle (label) = angle;
+#endif
   label_stretch (label) = 0;
   label_font (label) = NULL;
   label_rgba (label) = NULL;

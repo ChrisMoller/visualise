@@ -48,6 +48,8 @@
 %left       RIGHT_BRACKET
 %right      LEFT_BRACE
 %left       RIGHT_BRACE
+%right      LEFT_ANGLE
+%left       RIGHT_ANGLE
 %left       COMMA
 %left       NEGATE
 %left       ASSIGN
@@ -55,6 +57,7 @@
 %type	<s> optname
 %type	<s> anystring
 %type	<p> options
+%type	<n> optangle
 %type	<p> param
 %type	<i> optid
 %token      ERROR
@@ -82,9 +85,9 @@ optid   : /* empty */         { $$ = 0; }
 	| optid DIFFERENTIATE { $$ = $1 - 1; }
 	;
 
-parameters: LABEL options
+parameters: LABEL options optangle
               LEFT_BRACKET phrase COMMA phrase RIGHT_BRACKET QSTRING
-                 { create_label ($2, $4, $6, $8); }
+               { create_label ($2, $3, $5, $7, $9); }
 	| KEY keyarg
 	| BACKGROUND anystring { set_bg ($2); }
 	| CONTROL STRING phrase LEFT_BRACKET phrase COMMA phrase RIGHT_BRACKET
@@ -109,6 +112,10 @@ optname : { $$ = NULL; }
 options : { $$ = NULL; }
 	| LEFT_BRACE param RIGHT_BRACE { $$ = $2; }
         ;
+
+optangle : { $$ = NULL; }
+ 	 | LEFT_ANGLE phrase RIGHT_ANGLE { $$ = $2; }
+         ;
 
 param   : { $$ = NULL; }
 	| param STRING ASSIGN anystring { $$ = cat_param ($1, $2, $4); }
