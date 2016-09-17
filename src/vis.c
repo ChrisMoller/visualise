@@ -672,8 +672,8 @@ save_dialogue (GtkWidget *widget, gpointer data)
     gtk_file_chooser_dialog_new (_ ("Save image"),
 				 GTK_WINDOW (window),
 				 GTK_FILE_CHOOSER_ACTION_SAVE,
-				 "_OK", GTK_RESPONSE_ACCEPT,
-				 "_Cancel", GTK_RESPONSE_CANCEL,
+				 _ ("OK"), GTK_RESPONSE_ACCEPT,
+				 _ ("Cancel"), GTK_RESPONSE_CANCEL,
 				 NULL);
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
   gtk_dialog_set_default_response (GTK_DIALOG (dialog),
@@ -682,7 +682,7 @@ save_dialogue (GtkWidget *widget, gpointer data)
 
   
   GtkWidget *hbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 8);
-  GtkWidget *label = gtk_label_new ("Width");
+  GtkWidget *label = gtk_label_new (_ ("Width"));
   gtk_box_pack_start (GTK_BOX (hbox), GTK_WIDGET (label), FALSE, FALSE, 2);
   
   GtkAdjustment *wadj = gtk_adjustment_new ((gdouble)width,	// value
@@ -694,7 +694,7 @@ save_dialogue (GtkWidget *widget, gpointer data)
   GtkWidget *wbutton = gtk_spin_button_new (wadj, 1.0, 3);
   gtk_box_pack_start (GTK_BOX (hbox), GTK_WIDGET (wbutton), FALSE, FALSE, 2);
   
-  label = gtk_label_new ("Height");
+  label = gtk_label_new (_ ("Height"));
   gtk_box_pack_start (GTK_BOX (hbox), GTK_WIDGET (label), FALSE, FALSE, 2);
   
   GtkAdjustment *hadj = gtk_adjustment_new ((gdouble)height,	// value
@@ -713,52 +713,94 @@ save_dialogue (GtkWidget *widget, gpointer data)
     gdouble ww = gtk_spin_button_get_value (GTK_SPIN_BUTTON (wbutton));
     gdouble hh = gtk_spin_button_get_value (GTK_SPIN_BUTTON (hbutton));
     gchar *file = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
-    cairo_surface_t *tsurface = NULL;
 
-    int wwi = (int)ww;
-    int hhi = (int)hh;
-    gboolean do_magick = FALSE;
-    
-    if (g_str_has_suffix (file, ".ps"))
-      tsurface = cairo_ps_surface_create (file, wwi, hhi);
-    else if (g_str_has_suffix (file, ".pdf"))
-      tsurface = cairo_pdf_surface_create (file, wwi, hhi);
-    else if (g_str_has_suffix (file, ".svg"))
-      tsurface = cairo_svg_surface_create (file, wwi, hhi);
-    else if (g_str_has_suffix (file, ".png") ||
-	     g_str_has_suffix (file, ".jpg") ||
-	     g_str_has_suffix (file, ".tif")
-	     ) {
-      tsurface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, wwi, hhi);
-      do_magick = TRUE;
-    }
-
-    if (tsurface) {
-      cairo_t *cr = cairo_create (tsurface);
-      da_draw (cr, ww, hh);
-      if (do_magick) {
-	int wwr = cairo_image_surface_get_width (tsurface);
-	int hhr = cairo_image_surface_get_height (tsurface);
-	unsigned char *pixels = cairo_image_surface_get_data (tsurface);
-	magick_dump (hhr, wwr, file, pixels);
+    if (file) {
+      gboolean go_ahead = TRUE;
+      if (g_file_test (file, G_FILE_TEST_EXISTS)) {
+	if (g_file_test (file, G_FILE_TEST_IS_REGULAR)) {
+	  GtkWidget *mdlg =
+	    gtk_message_dialog_new (GTK_WINDOW (window),
+				    GTK_DIALOG_MODAL |
+				    GTK_DIALOG_DESTROY_WITH_PARENT,
+				    GTK_MESSAGE_ERROR,
+				    GTK_BUTTONS_NONE,
+				    _ ("File %s exists.  Overwrite?"), file);
+	  gtk_dialog_add_buttons (GTK_DIALOG (mdlg),
+				  _ ("Override"), GTK_RESPONSE_ACCEPT,
+				  _ ("Cancel"), GTK_RESPONSE_CANCEL,
+				  NULL);
+	  gtk_window_set_keep_above (GTK_WINDOW (mdlg), TRUE);
+	  gtk_window_set_position (GTK_WINDOW (mdlg), GTK_WIN_POS_MOUSE);
+	  response = gtk_dialog_run (GTK_DIALOG (mdlg));
+	  if (response != GTK_RESPONSE_ACCEPT) go_ahead = FALSE;
+	  gtk_widget_destroy (mdlg);
+	  go_ahead = FALSE;
+	}
+	else {
+	  GtkWidget *mdlg =
+	    gtk_message_dialog_new (GTK_WINDOW (window),
+				    GTK_DIALOG_MODAL |
+				    GTK_DIALOG_DESTROY_WITH_PARENT,
+				    GTK_MESSAGE_ERROR,
+				    GTK_BUTTONS_CLOSE,
+				    _ ("File %s exists and is not a regular file.  It can't be overridden."), file);
+	  gtk_window_set_keep_above (GTK_WINDOW (mdlg), TRUE);
+	  gtk_window_set_position (GTK_WINDOW (mdlg), GTK_WIN_POS_MOUSE);
+	  gtk_dialog_run (GTK_DIALOG (mdlg));
+	  gtk_widget_destroy (mdlg);
+	  go_ahead = FALSE;
+	}
       }
-      cairo_surface_finish (tsurface);
-      cairo_destroy (cr);
+
+      if (go_ahead) {
+	cairo_surface_t *tsurface = NULL;
+
+	int wwi = (int)ww;
+	int hhi = (int)hh;
+	gboolean do_magick = FALSE;
+    
+	if (g_str_has_suffix (file, ".ps"))
+	  tsurface = cairo_ps_surface_create (file, wwi, hhi);
+	else if (g_str_has_suffix (file, ".pdf"))
+	  tsurface = cairo_pdf_surface_create (file, wwi, hhi);
+	else if (g_str_has_suffix (file, ".svg"))
+	  tsurface = cairo_svg_surface_create (file, wwi, hhi);
+	else if (g_str_has_suffix (file, ".png") ||
+		 g_str_has_suffix (file, ".jpg") ||
+		 g_str_has_suffix (file, ".tif")
+		 ) {
+	  tsurface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, wwi, hhi);
+	  do_magick = TRUE;
+	}
+
+	if (tsurface) {
+	  cairo_t *cr = cairo_create (tsurface);
+	  da_draw (cr, ww, hh);
+	  if (do_magick) {
+	    int wwr = cairo_image_surface_get_width (tsurface);
+	    int hhr = cairo_image_surface_get_height (tsurface);
+	    unsigned char *pixels = cairo_image_surface_get_data (tsurface);
+	    magick_dump (hhr, wwr, file, pixels);
+	  }
+	  cairo_surface_finish (tsurface);
+	  cairo_destroy (cr);
+	}
+	else {
+	  GtkWidget *mdlg =
+	    gtk_message_dialog_new (GTK_WINDOW (window),
+				    GTK_DIALOG_MODAL |
+				    GTK_DIALOG_DESTROY_WITH_PARENT,
+				    GTK_MESSAGE_ERROR,
+				    GTK_BUTTONS_OK,
+				    _ ("Unknown file type: %s"), file);
+	  gtk_window_set_keep_above (GTK_WINDOW (mdlg), TRUE);
+	  gtk_window_set_position (GTK_WINDOW (mdlg), GTK_WIN_POS_MOUSE);
+	  gtk_dialog_run (GTK_DIALOG (mdlg));
+	  gtk_widget_destroy (mdlg);
+	}
+      }
+      g_free (file);
     }
-    else {
-      GtkWidget *mdlg =
-	gtk_message_dialog_new (GTK_WINDOW (window),
-				GTK_DIALOG_MODAL |
-				GTK_DIALOG_DESTROY_WITH_PARENT,
-				GTK_MESSAGE_ERROR,
-				GTK_BUTTONS_OK,
-				_ ("Unknown file type: %s"), file);
-      gtk_window_set_keep_above (GTK_WINDOW (mdlg), TRUE);
-      gtk_window_set_position (GTK_WINDOW (mdlg), GTK_WIN_POS_MOUSE);
-      gtk_dialog_run (GTK_DIALOG (mdlg));
-      gtk_widget_destroy (mdlg);
-    }
-    g_free (file);
   }
   gtk_widget_destroy (dialog);
 }
